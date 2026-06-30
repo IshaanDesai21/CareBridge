@@ -1,0 +1,14 @@
+# Node
+node_modules/
+npm-debug.log
+.env
+
+# macOS
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log

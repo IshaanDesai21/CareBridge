@@ -1,0 +1,130 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+:root {
+	--primary: #667eea;
+	--primary-dark: #764ba2;
+	--success: #10b981;
+	--danger: #ef4444;
+	--warning: #f59e0b;
+	--text: #1f2937;
+	--text-light: #6b7280;
+	--bg: #f9fafb;
+	--card: #ffffff;
+	--border: #e5e7eb;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	background: var(--bg);
+	color: var(--text);
+	line-height: 1.6;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.card {
+	background: var(--card);
+	border-radius: 16px;
+	padding: 32px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+	margin-bottom: 24px;
+}
+
+.btn {
+	padding: 12px 24px;
+	border: none;
+	border-radius: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+	display: inline-block;
+	text-align: center;
+}
+
+.btn-primary {
+	background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+	color: white;
+}
+
+.btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+	background: var(--border);
+	color: var(--text);
+}
+
+.btn-secondary:hover {
+	background: #d1d5db;
+}
+
+.form-group {
+	margin-bottom: 20px;
+}
+
+.form-group label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.form-group input,
+.form-group textarea {
+	width: 100%;
+	padding: 12px;
+	border: 2px solid var(--border);
+	border-radius: 10px;
+	font-size: 16px;
+	transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.alert {
+	padding: 16px;
+	border-radius: 10px;
+	margin-bottom: 20px;
+}
+
+.alert-success {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.alert-error {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+h1, h2, h3 {
+	margin-bottom: 16px;
+	font-weight: 700;
+}
+
+h1 {
+	font-size: 2.5rem;
+}
+
+h2 {
+	font-size: 2rem;
+}
+
+h3 {
+	font-size: 1.5rem;
+}

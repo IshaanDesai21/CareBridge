@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareBridge - Healthcare Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        h2 { color: #333; margin-bottom: 20px; }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .wellness-score {
+            font-size: 6em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 30px 0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .slider-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .slider-value {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.5);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-hints {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .hidden { display: none; }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .patient-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .patient-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        
+        .patient-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .patient-score {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Section -->
+        <div id="authSection" class="card">
+            <h1>🏥 CareBridge</h1>
+            <p style="color: #666; font-size: 1.2em; margin-bottom: 30px;">Healthcare Coordination Platform</p>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showLogin()">Login</button>
+                <button class="tab" onclick="showRegister()">Register</button>
+            </div>
+
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" value="test@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" value="password123">
+                </div>
+                <button class="btn" onclick="login()">Sign In</button>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="regFirstName" placeholder="John">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="regLastName" placeholder="Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="••••••••">
+                </div>
+                <button class="btn" onclick="register()">Create Account</button>
+            </div>
+
+            <div id="message"></div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1>Welcome, <span id="userName"></span>!</h1>
+                        <p style="color: #666;">Track your daily wellness</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="text-align: center;">Your Wellness Score</h2>
+                <div class="wellness-score" id="wellnessScore">75</div>
+                <p style="text-align: center; color: #666; font-size: 1.1em;">Keep up the great work! 🌟</p>
+            </div>
+
+            <div class="card">
+                <h2>📊 Daily Wellness Check-In</h2>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>⚡ Energy Level</span>
+                        <span class="slider-value" id="energyValue">5</span>
+                    </div>
+                    <input type="range" min="1" max="10" value="5" id="energy" oninput="updateValue('energy')">
+                    <div class="slider-hints">
+                        <span>Low Energy</span>
+                        <span>High Energy</span>
+                    </div>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>😊 Mood</span>
+                        <span class="slider-value" id="moodValue">5</span>
+                    </div>
+                    <input type="range" min="1" max="10" value="5" id="mood" oninput="updateValue('mood')">
+                    <div class="slider-hints">
+                        <span>Low Mood</span>
+                        <span>Great Mood</span>
+                    </div>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>🤕 Pain Level</span>
+                        <span class="slider-value" id="painValue">5</span>
+                    </div>
+                    <input type="range" min="1" max="10" value="5" id="pain" oninput="updateValue('pain')">
+                    <div class="slider-hints">
+                        <span>No Pain</span>
+                        <span>Severe Pain</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Notes (Optional)</label>
+                    <textarea id="notes" rows="4" placeholder="How are you feeling today? Any concerns or observations?"></textarea>
+                </div>
+
+                <button class="btn" onclick="submitCheckin()">✓ Submit Check-In</button>
+            </div>
+
+            <div class="card">
+                <h2>👥 All Patients</h2>
+                <div id="patientsList" class="patient-list">
+                    <p style="color: #666;">Loading patients...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let patientId = null;
+
+        function showMessage(msg, type = 'success') {
+            document.getElementById('message').innerHTML = `<div class="alert ${type}">${msg}</div>`;
+            setTimeout(() => document.getElementById('message').innerHTML = '', 4000);
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+        }
+
+        async function register() {
+            const data = {
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                firstName: document.getElementById('regFirstName').value,
+                lastName: document.getElementById('regLastName').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    token = result.token;
+                    localStorage.setItem('token', token);
+                    currentUser = result.user;
+                    showMessage('Account created successfully! 🎉', 'success');
+                    setTimeout(() => showDashboard(), 1000);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Registration failed: ' + error.message, 'error');
+            }
+        }
+
+        async function login() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    token = result.token;
+                    localStorage.setItem('token', token);
+                    currentUser = result.user;
+                    showMessage('Welcome back! 👋', 'success');
+                    setTimeout(() => showDashboard(), 800);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Login failed: ' + error.message, 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            showMessage('Logged out successfully', 'success');
+        }
+
+        async function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.firstName || currentUser.email;
+            await loadPatients();
+        }
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/patients');
+                const result = await response.json();
+                
+                if (result.patients && result.patients.length > 0) {
+                    patientId = result.patients[0].id;
+                    document.getElementById('wellnessScore').textContent = result.patients[0].wellness_score;
+                    
+                    const html = result.patients.map(p => `
+                        <div class="patient-item">
+                            <div>
+                                <strong>${p.first_name || 'Unknown'} ${p.last_name || 'User'}</strong><br>
+                                <small style="color: #666;">${p.email}</small>
+                            </div>
+                            <div class="patient-score">${p.wellness_score}</div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('patientsList').innerHTML = html;
+                } else {
+                    patientId = 1;
+                    document.getElementById('patientsList').innerHTML = '<p style="color: #666;">You are the first patient! Complete a check-in below.</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load patients:', error);
+                patientId = 1;
+            }
+        }
+
+        function updateValue(id) {
+            const value = document.getElementById(id).value;
+            document.getElementById(id + 'Value').textContent = value;
+        }
+
+        async function submitCheckin() {
+            if (!patientId) {
+                showMessage('Please wait while we load your profile...', 'error');
+                return;
+            }
+
+            const data = {
+                patientId: patientId,
+                energy: parseInt(document.getElementById('energy').value),
+                mood: parseInt(document.getElementById('mood').value),
+                pain: parseInt(document.getElementById('pain').value),
+                notes: document.getElementById('notes').value
+            };
+
+            try {
+                const response = await fetch('/api/wellness', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage('Check-in submitted successfully! 🎉', 'success');
+                    document.getElementById('wellnessScore').textContent = result.wellnessScore;
+                    document.getElementById('notes').value = '';
+                    await loadPatients();
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Submission failed: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-login if token exists
+        if (token) {
+            // Try to restore session
+            showDashboard();
+        }
+    </script>
+</body>
+</html>
