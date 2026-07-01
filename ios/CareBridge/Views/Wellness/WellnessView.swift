@@ -32,7 +32,7 @@ struct WellnessView: View {
                             Image(systemName: "chevron.right")
                         }
                         .padding(20)
-                        .background(Color.blue)
+                        .background(Color.cbPrimary)
                         .foregroundStyle(.white)
                         .cornerRadius(16)
                     }
@@ -71,9 +71,11 @@ struct WellnessView: View {
                 }
                 .padding(.bottom, 32)
             }
+            .background(Color.cbBackground.ignoresSafeArea())
             .navigationTitle("Wellness")
             .sheet(isPresented: $showingCheckin) {
                 WellnessCheckinView()
+                    .environmentObject(authManager)
             }
             .task {
                 await loadHistory()
@@ -116,9 +118,9 @@ struct WellnessHistoryCard: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                MetricBadge(label: "Energy", value: checkin.energy ?? 0, color: .blue)
-                MetricBadge(label: "Pain", value: checkin.pain ?? 0, color: .red)
-                MetricBadge(label: "Sleep", value: checkin.sleepQuality ?? 0, color: .purple)
+                MetricBadge(label: "Energy", value: checkin.energy ?? 0, color: .cbPrimary)
+                MetricBadge(label: "Pain", value: checkin.pain ?? 0, color: .cbRed)
+                MetricBadge(label: "Sleep", value: checkin.sleepQuality ?? 0, color: .cbTeal)
             }
             
             if let notes = checkin.notes, !notes.isEmpty {
@@ -129,9 +131,9 @@ struct WellnessHistoryCard: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(Color.white)
+        .cornerRadius(14)
+        .shadow(color: Color.cbBorder.opacity(0.6), radius: 6, x: 0, y: 2)
     }
     
     private func moodIcon(_ mood: Int) -> String {
@@ -144,9 +146,9 @@ struct WellnessHistoryCard: View {
     
     private func moodColor(_ mood: Int) -> Color {
         switch mood {
-        case 8...10: return .green
-        case 5...7: return .orange
-        default: return .red
+        case 8...10: return .cbGreen
+        case 5...7: return .cbAmber
+        default: return .cbRed
         }
     }
 }

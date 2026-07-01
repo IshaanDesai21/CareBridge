@@ -1,158 +1,342 @@
 import SwiftUI
+import WidgetKit
+
+// MARK: - Home View
 
 struct HomeView: View {
     @EnvironmentObject var authManager: AuthenticationManager
-    @State private var todayCheckin: WellnessCheckin?
-    @State private var showingHIPAAConsent = false
-    @State private var hasAcceptedHIPAA = false
-    @State private var showingCallCaregiverOptions = false
-    
+    @State private var showCallDialog = false
+    @State private var showAIChat = false
+    @State private var alertSent = false
+    @State private var sendingAlert = false
+    @State private var alertError: String?
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Large Greeting
-                Text("Hi, \(authManager.currentUser?.firstName ?? "there")!")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 40)
-                
-                Spacer()
-                
-                // Massive Action Buttons
-                VStack(spacing: 24) {
-                    
-                    // Daily Check-in Button
-                    Button(action: {
-                        // Navigate to check-in or show check-in modal
-                    }) {
-                        HStack {
-                            Image(systemName: todayCheckin != nil ? "checkmark.circle.fill" : "heart.text.square.fill")
-                                .font(.system(size: 40))
-                            Text(todayCheckin != nil ? "Check-in Done" : "Daily Check-in")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
-                        .background(todayCheckin != nil ? Color.green : Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(24)
-                        .shadow(color: (todayCheckin != nil ? Color.green : Color.blue).opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    
-                    // Call Caregiver Button
-                    Button(action: {
-                        showingCallCaregiverOptions = true
-                    }) {
-                        HStack {
-                            Image(systemName: "phone.circle.fill")
-                                .font(.system(size: 40))
-                            Text("Call Caregiver")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(24)
-                        .shadow(color: Color.orange.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    .confirmationDialog("Call Caregiver", isPresented: $showingCallCaregiverOptions, titleVisibility: .visible) {
-                        Button("Urgent Help Needed", role: .destructive) {
-                            // Send urgent alert to caregiver dashboard
-                            print("Urgent alert sent")
-                        }
-                        Button("Not Urgent - Just a Question") {
-                            // Send normal notification
-                            print("Non-urgent notification sent")
-                        }
-                        Button("Cancel", role: .cancel) {}
-                    } message: {
-                        Text("Is this an emergency or a general question?")
-                            .font(.title3)
-                    }
-                    
-                    // Talk to AI Button (HIPAA locked)
-                    Button(action: {
-                        if !hasAcceptedHIPAA {
-                            showingHIPAAConsent = true
-                        } else {
-                            // Open AI Companion
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "message.circle.fill")
-                                .font(.system(size: 40))
-                            Text("Talk to AI")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
-                        .background(hasAcceptedHIPAA ? Color.purple : Color.gray.opacity(0.3))
-                        .foregroundColor(hasAcceptedHIPAA ? .white : .secondary)
-                        .cornerRadius(24)
-                        .shadow(color: (hasAcceptedHIPAA ? Color.purple : Color.clear).opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    .sheet(isPresented: $showingHIPAAConsent) {
-                        HIPAAConsentView(isAccepted: $hasAcceptedHIPAA)
-                    }
-                    
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Hi, \(authManager.currentUser?.firstName ?? "there")")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color(red: 0.1, green: 0.12, blue: 0.18))
+                    Text("How are you feeling today?")
+                        .font(.system(size: 17))
+                        .foregroundStyle(.secondary)
                 }
-                
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.top, 48)
+                .padding(.bottom, 32)
+
+                VStack(spacing: 16) {
+                    NavigationLink(destination: WellnessCheckinView().environmentObject(authManager)) {
+                        ActionButton(
+                            title: "Daily Check-In",
+                            subtitle: "Track how you're feeling",
+                            icon: "heart.text.square.fill",
+                            color: Color.cbPrimary
+                        )
+                    }
+
+                    Button(action: { showCallDialog = true }) {
+                        ActionButton(
+                            title: alertSent ? "Caregiver Notified" : "Call Caregiver",
+                            subtitle: alertSent ? "Your team has been alerted" : "Request help from your care team",
+                            icon: alertSent ? "checkmark.circle.fill" : "phone.circle.fill",
+                            color: alertSent ? Color.cbGreen : Color.cbAmber
+                        )
+                    }
+                    .disabled(sendingAlert)
+
+                    Button(action: { showAIChat = true }) {
+                        ActionButton(
+                            title: "Talk with AI",
+                            subtitle: "Your companion is here",
+                            icon: "bubble.left.and.bubble.right.fill",
+                            color: Color.cbTeal
+                        )
+                    }
+                }
+                .padding(.horizontal, 24)
+
+                if let err = alertError {
+                    Text(err)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.top, 12)
+                        .padding(.horizontal, 24)
+                }
+
                 Spacer()
             }
-            .padding(.horizontal, 24)
+            .background(Color.cbBackground.ignoresSafeArea())
             .navigationBarHidden(true)
+            .confirmationDialog("Contact your care team", isPresented: $showCallDialog, titleVisibility: .visible) {
+                Button("Urgent — I need help now", role: .destructive) {
+                    Task { await sendAlert(urgent: true, message: "URGENT: Patient needs immediate assistance") }
+                }
+                Button("Not urgent") {
+                    Task { await sendAlert(urgent: false, message: "Patient would like to speak with their caregiver") }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Is this an emergency or a general question?")
+            }
+            .sheet(isPresented: $showAIChat) {
+                AIChatView().environmentObject(authManager)
+            }
+        }
+        .task { await syncWidgetData() }
+    }
+
+    @MainActor
+    private func syncWidgetData() async {
+        guard let token = authManager.token else { return }
+        do {
+            let pid = try await APIService.shared.getMyPatient(token: token)
+            let history = try await APIService.shared.getWellnessHistory(patientId: pid, token: token)
+            if let latest = history.first {
+                let suite = UserDefaults(suiteName: "group.com.carebridge.app")
+                let fullName = [authManager.currentUser?.firstName, authManager.currentUser?.lastName]
+                    .compactMap { $0 }.joined(separator: " ")
+                suite?.set(fullName, forKey: "widget_patient_name")
+                // Recompute score from latest checkin metrics
+                let e = latest.energy ?? 5, f = latest.fatigue ?? 5, p = latest.pain ?? 5
+                let m = latest.mood ?? 5, s = latest.sleepQuality ?? 5, b = latest.breathing ?? 5
+                let mo = latest.mobility ?? 5, ba = latest.balance ?? 5, sp = latest.speechClarity ?? 5
+                let ap = latest.appetite ?? 5, hy = latest.hydration ?? 5, sw = latest.swallowingDifficulty ?? 5
+                let total = Double(e) + Double(11-f) + Double(11-p) + Double(m) + Double(s) + Double(b)
+                    + Double(mo) + Double(ba) + Double(sp) + Double(ap) + Double(hy) + Double(11-sw)
+                let score = min(100, max(0, Int((total / 12.0) * 10.0)))
+                suite?.set(score, forKey: "widget_wellness_score")
+                suite?.set(e, forKey: "widget_energy")
+                suite?.set(m, forKey: "widget_mood")
+                let fmt = DateFormatter(); fmt.dateStyle = .short; fmt.timeStyle = .short
+                suite?.set(fmt.string(from: Date()), forKey: "widget_last_checkin")
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        } catch {}
+    }
+
+    @MainActor
+    private func sendAlert(urgent: Bool, message: String) async {
+        guard let token = authManager.token else { return }
+        sendingAlert = true
+        alertError = nil
+        do {
+            try await APIService.shared.sendAlert(message: message, isUrgent: urgent, token: token)
+            alertSent = true
+        } catch {
+            alertError = "Could not reach server. Is the backend running at \(APIService.defaultServerURL)?"
+        }
+        sendingAlert = false
+    }
+}
+
+// MARK: - Action Button
+
+struct ActionButton: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 20) {
+            Image(systemName: icon)
+                .font(.system(size: 34))
+                .foregroundStyle(.white)
+                .frame(width: 58)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 21, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.6))
+        }
+        .padding(.horizontal, 22)
+        .padding(.vertical, 26)
+        .background(color)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: color.opacity(0.35), radius: 10, x: 0, y: 5)
+    }
+}
+
+// MARK: - AI Chat
+
+struct ChatMessage: Identifiable {
+    let id = UUID()
+    let role: String
+    let text: String
+}
+
+struct ChatBubble: View {
+    let message: ChatMessage
+
+    var body: some View {
+        HStack {
+            if message.role == "user" { Spacer(minLength: 60) }
+            Text(message.text)
+                .font(.body)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(message.role == "user" ? Color.cbPrimary : Color.white)
+                .foregroundStyle(message.role == "user" ? .white : .primary)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+            if message.role == "assistant" { Spacer(minLength: 60) }
         }
     }
 }
 
-struct HIPAAConsentView: View {
-    @Binding var isAccepted: Bool
+struct AIChatView: View {
     @Environment(\.dismiss) var dismiss
-    
+    @EnvironmentObject var authManager: AuthenticationManager
+
+    @State private var companionName = "Alex"
+    @State private var messages: [ChatMessage] = []
+    @State private var inputText = ""
+    @State private var isSending = false
+    @State private var isLoadingCompanion = true
+
     var body: some View {
-        VStack(spacing: 32) {
-            Text("Privacy Terms")
-                .font(.system(size: 40, weight: .bold, design: .rounded))
-                .padding(.top, 40)
-            
-            ScrollView {
-                Text("To use the AI Companion feature, we need your permission to securely analyze your health data.\n\nYour information is protected under HIPAA guidelines and is only used to provide personalized health insights and companionship.\n\nDo you consent to these terms?")
-                    .font(.system(size: 24))
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-            
-            VStack(spacing: 16) {
-                Button(action: {
-                    isAccepted = true
-                    dismiss()
-                }) {
-                    Text("I Agree")
-                        .font(.system(size: 28, weight: .bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 24)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(20)
+        NavigationStack {
+            Group {
+                if isLoadingCompanion {
+                    VStack(spacing: 14) {
+                        ProgressView()
+                        Text("Connecting to \(companionName)…")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    VStack(spacing: 0) {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(messages) { msg in
+                                        ChatBubble(message: msg)
+                                            .id(msg.id)
+                                    }
+                                    if isSending {
+                                        HStack(spacing: 8) {
+                                            ProgressView().scaleEffect(0.75)
+                                            Text("\(companionName) is thinking…")
+                                                .font(.caption).foregroundStyle(.secondary)
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 16)
+                                        .id("loading")
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .onChange(of: messages.count) { _, _ in
+                                withAnimation { proxy.scrollTo(messages.last?.id) }
+                            }
+                            .onChange(of: isSending) { _, sending in
+                                if sending { withAnimation { proxy.scrollTo("loading") } }
+                            }
+                        }
+
+                        Divider()
+
+                        HStack(spacing: 10) {
+                            TextField("Say something…", text: $inputText, axis: .vertical)
+                                .lineLimit(1...4)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Color.cbBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.cbBorder, lineWidth: 1))
+
+                            Button { Task { await send() } } label: {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 34))
+                                    .foregroundStyle(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isSending
+                                        ? Color.cbBorder : Color.cbPrimary)
+                            }
+                            .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.white)
+                    }
                 }
-                
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("No Thanks")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .padding(.vertical, 16)
+            }
+            .background(Color.cbBackground.ignoresSafeArea())
+            .navigationTitle(companionName)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
-            .padding(.horizontal)
-            .padding(.bottom, 40)
         }
+        .task { await loadCompanion() }
+    }
+
+    @MainActor
+    private func loadCompanion() async {
+        guard let token = authManager.token else {
+            setupGreeting(); isLoadingCompanion = false; return
+        }
+        do {
+            let pid = try await APIService.shared.getMyPatient(token: token)
+            let details = try await APIService.shared.getPatientDetails(patientId: pid, token: token)
+            if let name = details.aiCompanionName, !name.isEmpty {
+                companionName = name
+            } else {
+                let gender = details.gender?.lowercased()
+                companionName = gender == "male" ? "James" : gender == "female" ? "Rose" : "Alex"
+            }
+        } catch {}
+        setupGreeting()
+        isLoadingCompanion = false
+    }
+
+    private func setupGreeting() {
+        let firstName = authManager.currentUser?.firstName ?? "there"
+        messages = [ChatMessage(role: "assistant", text: "Hi \(firstName)! I'm \(companionName). It's lovely to chat with you today — how are you feeling?")]
+    }
+
+    @MainActor
+    private func send() async {
+        guard let token = authManager.token else { return }
+        let text = inputText.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return }
+        inputText = ""
+        messages.append(ChatMessage(role: "user", text: text))
+        isSending = true
+        do {
+            let history: [[String: String]] = messages.dropLast().compactMap { msg in
+                guard msg.role == "user" || msg.role == "assistant" else { return nil }
+                return ["role": msg.role, "content": msg.text]
+            }
+            let response = try await APIService.shared.sendChatMessage(
+                text,
+                history: history,
+                token: token
+            )
+            let replyText = response.reply
+            if !response.companionName.isEmpty { companionName = response.companionName }
+            messages.append(ChatMessage(role: "assistant", text: replyText))
+        } catch {
+            messages.append(ChatMessage(role: "assistant", text: "Sorry, I'm having trouble connecting right now. Try again in a moment!"))
+        }
+        isSending = false
     }
 }
 
 #Preview {
-    HomeView()
-        .environmentObject(AuthenticationManager())
+    HomeView().environmentObject(AuthenticationManager())
 }

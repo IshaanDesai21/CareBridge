@@ -83,8 +83,10 @@ struct Medication: Codable, Identifiable {
     let dosage: String?
     let frequency: String?
     let instructions: String?
-    let isActive: Bool
-    
+    let isActive: Int  // SQLite returns 0/1 integer, not bool
+
+    var active: Bool { isActive != 0 }
+
     enum CodingKeys: String, CodingKey {
         case id
         case patientId = "patient_id"
@@ -134,6 +136,27 @@ struct JournalEntry: Codable, Identifiable {
     }
 }
 
+struct PatientAlert: Codable, Identifiable {
+    let id: Int
+    let patientName: String?
+    let message: String
+    let isUrgent: Int
+    let isAcknowledged: Int
+    let createdAt: String
+
+    var urgent: Bool { isUrgent != 0 }
+    var acknowledged: Bool { isAcknowledged != 0 }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case patientName = "patient_name"
+        case message
+        case isUrgent = "is_urgent"
+        case isAcknowledged = "is_acknowledged"
+        case createdAt = "created_at"
+    }
+}
+
 struct CareNote: Codable, Identifiable {
     let id: Int
     let patientId: Int
@@ -152,6 +175,100 @@ struct CareNote: Codable, Identifiable {
         case content
         case firstName = "first_name"
         case lastName = "last_name"
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Emergency Contact
+
+struct EmergencyContact: Codable, Identifiable {
+    var id: String { name + phone }
+    let name: String
+    let relation: String
+    let phone: String
+    let isPrimary: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case name, relation, phone
+        case isPrimary = "isPrimary"
+    }
+}
+
+// MARK: - Care Team Member
+
+struct CareTeamMember: Codable, Identifiable {
+    var id: String { name + role }
+    let name: String
+    let role: String
+    let organization: String?
+    let phone: String?
+}
+
+// MARK: - Physical Details (caregiver dashboard)
+
+struct PhysicalDetails: Codable {
+    let id: Int
+    let firstName: String?
+    let lastName: String?
+    let gender: String?
+    let heightCm: Double?
+    let weightKg: Double?
+    let hearingNotes: String?
+    let visionScore: String?
+    let medicalHistory: String?
+    let diagnoses: [String]?
+    let allergies: [String]?
+    let aiCompanionName: String?
+    let emergencyContacts: [EmergencyContact]?
+    let careTeam: [CareTeamMember]?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case gender
+        case heightCm = "height_cm"
+        case weightKg = "weight_kg"
+        case hearingNotes = "hearing_notes"
+        case visionScore = "vision_score"
+        case medicalHistory = "medical_history"
+        case diagnoses, allergies
+        case aiCompanionName = "ai_companion_name"
+        case emergencyContacts = "emergency_contacts"
+        case careTeam = "care_team"
+    }
+
+    var heightFormatted: String {
+        guard let h = heightCm else { return "—" }
+        let inches = h / 2.54
+        let feet = Int(inches / 12)
+        let inch = Int(inches.truncatingRemainder(dividingBy: 12))
+        return String(format: "%.0f cm  (%d′%d″)", h, feet, inch)
+    }
+
+    var weightFormatted: String {
+        guard let w = weightKg else { return "—" }
+        let lbs = w * 2.205
+        return String(format: "%.1f kg  (%.1f lbs)", w, lbs)
+    }
+}
+
+// MARK: - In-App Notification
+
+struct AppNotification: Codable, Identifiable {
+    let id: Int
+    let userId: Int
+    let title: String
+    let body: String
+    let type: String
+    let isRead: Int
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case title, body, type
+        case isRead = "is_read"
         case createdAt = "created_at"
     }
 }

@@ -1,11 +1,13 @@
+import 'dotenv/config';
+import os from 'os';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import logger from './utils/logger.js';
 import { connectDatabase } from './database/db.js';
+import { seedDemoData } from './database/seed.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -16,8 +18,8 @@ import appointmentRoutes from './routes/appointments.js';
 import journalRoutes from './routes/journal.js';
 import careNotesRoutes from './routes/careNotes.js';
 import aiRoutes from './routes/ai.js';
-
-dotenv.config();
+import familyRoutes from './routes/family.js';
+import alertRoutes from './routes/alerts.js';
 
 const app = express();
 const server = createServer(app);
@@ -57,10 +59,17 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/care-notes', careNotesRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/family', familyRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // WebSocket
+wss.on('error', (error) => {
+  logger.error('WebSocket server error:', error);
+});
+
 wss.on('connection', (ws) => {
   logger.info('WebSocket client connected');
+  ws.on('error', (error) => logger.error('WebSocket client error:', error));
   ws.on('message', (message) => logger.info(`WS message: ${message}`));
   ws.on('close', () => logger.info('WebSocket client disconnected'));
 });
@@ -81,14 +90,40 @@ app.use((err, req, res, next) => {
 // Start
 const PORT = process.env.PORT || 3000;
 
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled promise rejection:', reason);
+});
+
 function startServer() {
   try {
     connectDatabase();
-    server.listen(PORT, () => {
-      logger.info(`🚀 CareBridge API running on http://localhost:${PORT}`);
-      logger.info(`📊 Health check: http://localhost:${PORT}/health`);
-      logger.info(`💾 Database: SQLite (carebridge.db)`);
-      logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    seedDemoData();
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.error(`Port ${PORT} is already in use. Stop the existing server and retry.`);
+      } else {
+        logger.error('Server error:', error);
+      }
+      process.exit(1);
+    });
+    server.listen(PORT, '0.0.0.0', () => {
+      logger.info(`CareBridge API running on http://0.0.0.0:${PORT}`);
+      logger.info(`Health check: http://localhost:${PORT}/health`);
+      logger.info(`Database: SQLite (carebridge.db)`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      const nets = os.networkInterfaces();
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            logger.info(`Local network URL (set in iOS app): http://${net.address}:${PORT}`);
+          }
+        }
+      }
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

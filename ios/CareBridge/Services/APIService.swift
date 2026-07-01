@@ -30,7 +30,13 @@ enum APIError: Error, LocalizedError {
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "http://localhost:3000/api"
+    static let defaultServerURL = "http://192.168.87.196:3000"
+    static let serverURLKey = "carebridge_server_url"
+
+    private var baseURL: String {
+        let host = UserDefaults.standard.string(forKey: APIService.serverURLKey) ?? APIService.defaultServerURL
+        return host.hasSuffix("/") ? host + "api" : host + "/api"
+    }
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         return decoder
@@ -56,21 +62,19 @@ class APIService {
         return (response.user, response.token)
     }
     
-    func register(email: String, password: String, role: String, firstName: String, lastName: String) async throws -> (user: User, token: String) {
+    func register(email: String, password: String, role: String, firstName: String, lastName: String, phone: String? = nil, joinCode: String? = nil) async throws -> (user: User, token: String) {
         struct RegisterRequest: Codable {
-            let email: String
-            let password: String
-            let role: String
-            let firstName: String
-            let lastName: String
+            let email, password, role, firstName, lastName: String
+            let phone: String?
+            let joinCode: String?
         }
-        
+
         struct RegisterResponse: Codable {
             let user: User
             let token: String
         }
-        
-        let request = RegisterRequest(email: email, password: password, role: role, firstName: firstName, lastName: lastName)
+
+        let request = RegisterRequest(email: email, password: password, role: role, firstName: firstName, lastName: lastName, phone: phone, joinCode: joinCode)
         let response: RegisterResponse = try await post(endpoint: "/auth/register", body: request)
         return (response.user, response.token)
     }
@@ -96,7 +100,7 @@ class APIService {
         return response.checkin
     }
     
-    func createWellnessCheckin(patientId: Int, energy: Int, fatigue: Int, pain: Int, mood: Int, sleepQuality: Int, breathing: Int, mobility: Int, balance: Int, speechClarity: Int, appetite: Int, hydration: Int, swallowingDifficulty: Int, notes: String?, token: String) async throws -> WellnessCheckin {
+    func createWellnessCheckin(patientId: Int, energy: Int, fatigue: Int, pain: Int, mood: Int, sleepQuality: Int, breathing: Int, mobility: Int, balance: Int, speechClarity: Int, appetite: Int, hydration: Int, swallowingDifficulty: Int, weight: Double? = nil, notes: String?, token: String) async throws -> WellnessCheckin {
         struct CheckinRequest: Codable {
             let patientId: Int
             let energy: Int
@@ -111,14 +115,15 @@ class APIService {
             let appetite: Int
             let hydration: Int
             let swallowingDifficulty: Int
+            let weight: Double?
             let notes: String?
         }
-        
+
         struct CheckinResponse: Codable {
             let checkin: WellnessCheckin
             let wellnessScore: Int
         }
-        
+
         let request = CheckinRequest(
             patientId: patientId,
             energy: energy,
@@ -133,11 +138,30 @@ class APIService {
             appetite: appetite,
             hydration: hydration,
             swallowingDifficulty: swallowingDifficulty,
+            weight: weight,
             notes: notes
         )
-        
+
         let response: CheckinResponse = try await post(endpoint: "/wellness", body: request, token: token)
         return response.checkin
+    }
+
+    func updatePatientDetails(patientId: Int, gender: String? = nil, heightCm: Double? = nil, weightKg: Double? = nil, hearingNotes: String? = nil, visionScore: String? = nil, medicalHistory: String? = nil, diagnoses: [String]? = nil, allergies: [String]? = nil, aiCompanionName: String? = nil, aiCompanionGender: String? = nil, token: String) async throws {
+        struct UpdateRequest: Codable {
+            let gender: String?
+            let heightCm: Double?
+            let weightKg: Double?
+            let hearingNotes: String?
+            let visionScore: String?
+            let medicalHistory: String?
+            let diagnoses: [String]?
+            let allergies: [String]?
+            let aiCompanionName: String?
+            let aiCompanionGender: String?
+        }
+        struct SuccessResponse: Codable { let success: Bool }
+        let body = UpdateRequest(gender: gender, heightCm: heightCm, weightKg: weightKg, hearingNotes: hearingNotes, visionScore: visionScore, medicalHistory: medicalHistory, diagnoses: diagnoses, allergies: allergies, aiCompanionName: aiCompanionName, aiCompanionGender: aiCompanionGender)
+        let _: SuccessResponse = try await patch(endpoint: "/patients/\(patientId)/details", body: body, token: token)
     }
     
     func getWellnessHistory(patientId: Int, days: Int = 30, token: String) async throws -> [WellnessCheckin] {
@@ -158,6 +182,21 @@ class APIService {
         
         let response: MedicationsResponse = try await get(endpoint: "/medications/\(patientId)", token: token)
         return response.medications
+    }
+
+    func addMedication(patientId: Int, name: String, dosage: String, frequency: String, token: String) async throws -> Medication {
+        struct MedRequest: Codable {
+            let patientId: Int
+            let name: String
+            let dosage: String
+            let frequency: String
+        }
+        struct MedResponse: Codable {
+            let medication: Medication
+        }
+        let req = MedRequest(patientId: patientId, name: name, dosage: dosage, frequency: frequency)
+        let response: MedResponse = try await post(endpoint: "/medications", body: req, token: token)
+        return response.medication
     }
     
     // MARK: - Appointments
@@ -199,6 +238,106 @@ class APIService {
         return response.entry
     }
     
+    // MARK: - Alerts
+
+    func sendAlert(message: String, isUrgent: Bool, token: String) async throws {
+        struct AlertRequest: Codable {
+            let message: String
+            let isUrgent: Bool
+        }
+        struct AlertResponse: Codable {
+            let alert: PatientAlert
+        }
+        let _: AlertResponse = try await post(endpoint: "/alerts", body: AlertRequest(message: message, isUrgent: isUrgent), token: token)
+    }
+
+    func getAlerts(token: String) async throws -> [PatientAlert] {
+        struct AlertsResponse: Codable { let alerts: [PatientAlert] }
+        let response: AlertsResponse = try await get(endpoint: "/alerts", token: token)
+        return response.alerts
+    }
+
+    func acknowledgeAlert(id: Int, token: String) async throws {
+        struct Empty: Codable {}
+        struct SuccessResponse: Codable { let success: Bool }
+        let _: SuccessResponse = try await put(endpoint: "/alerts/\(id)/acknowledge", body: Empty(), token: token)
+    }
+
+    // MARK: - Patients list (for caregiver)
+
+    func getPatients(token: String) async throws -> [Patient] {
+        struct PatientsResponse: Codable { let patients: [Patient] }
+        let response: PatientsResponse = try await get(endpoint: "/patients", token: token)
+        return response.patients
+    }
+
+    // MARK: - Family
+
+    func getLinkedPatient(token: String) async throws -> Patient? {
+        struct FamilyResponse: Codable {
+            let linked: Bool
+            let patient: Patient?
+        }
+        let response: FamilyResponse = try await get(endpoint: "/family/patient", token: token)
+        return response.patient
+    }
+
+    func getCareNotes(patientId: Int, token: String) async throws -> [CareNote] {
+        struct NotesResponse: Codable { let notes: [CareNote] }
+        let response: NotesResponse = try await get(endpoint: "/care-notes/\(patientId)", token: token)
+        return response.notes
+    }
+
+    // MARK: - Patient self-lookup
+
+    func getMyPatient(token: String) async throws -> Int {
+        struct MyPatientResponse: Codable { let patient: Patient }
+        let response: MyPatientResponse = try await get(endpoint: "/patients/me", token: token)
+        return response.patient.id
+    }
+
+    // MARK: - AI Chat
+
+    func sendChatMessage(_ message: String, patientGender: String? = nil, history: [[String: String]] = [], token: String) async throws -> (reply: String, companionName: String) {
+        struct ChatRequest: Codable {
+            let message: String
+            let patientGender: String?
+            let history: [[String: String]]
+        }
+        struct ChatResponse: Codable { let message: String; let companionName: String?; let timestamp: String }
+        let body = ChatRequest(message: message, patientGender: patientGender, history: history)
+        let response: ChatResponse = try await post(endpoint: "/ai/chat", body: body, token: token)
+        return (response.message, response.companionName ?? "Alex")
+    }
+
+    // MARK: - Patient Physical Details
+
+    func getPatientDetails(patientId: Int, token: String) async throws -> PhysicalDetails {
+        struct DetailsResponse: Codable { let details: PhysicalDetails }
+        let response: DetailsResponse = try await get(endpoint: "/patients/\(patientId)/details", token: token)
+        return response.details
+    }
+
+    func getPatientFamilyCode(patientId: Int, token: String) async throws -> String {
+        struct CodeResponse: Codable { let code: String }
+        let response: CodeResponse = try await get(endpoint: "/patients/\(patientId)/join-code", token: token)
+        return response.code
+    }
+
+    // MARK: - Notifications
+
+    func getNotifications(token: String) async throws -> [AppNotification] {
+        struct NotifResponse: Codable { let notifications: [AppNotification]; let unreadCount: Int }
+        let response: NotifResponse = try await get(endpoint: "/alerts/notifications", token: token)
+        return response.notifications
+    }
+
+    func markNotificationRead(id: Int, token: String) async throws {
+        struct Empty: Codable {}
+        struct SuccessResponse: Codable { let success: Bool }
+        let _: SuccessResponse = try await put(endpoint: "/alerts/notifications/\(id)/read", body: Empty(), token: token)
+    }
+
     // MARK: - Generic Request Methods
     
     private func get<T: Codable>(endpoint: String, token: String? = nil) async throws -> T {
@@ -217,6 +356,26 @@ class APIService {
         return try await performRequest(request)
     }
     
+    private func patch<T: Codable, U: Codable>(endpoint: String, body: T, token: String? = nil) async throws -> U {
+        guard let url = URL(string: baseURL + endpoint) else { throw APIError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await performRequest(request)
+    }
+
+    private func put<T: Codable, U: Codable>(endpoint: String, body: T, token: String? = nil) async throws -> U {
+        guard let url = URL(string: baseURL + endpoint) else { throw APIError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await performRequest(request)
+    }
+
     private func post<T: Codable, U: Codable>(endpoint: String, body: T, token: String? = nil) async throws -> U {
         guard let url = URL(string: baseURL + endpoint) else {
             throw APIError.invalidURL

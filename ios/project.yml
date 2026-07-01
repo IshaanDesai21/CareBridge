@@ -1,0 +1,15 @@
+name: CareBridge
+options:
+  bundleIdPrefix: com.ishaandesai
+targets:
+  CareBridge:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [CareBridge]
+    info:
+      path: CareBridge/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false

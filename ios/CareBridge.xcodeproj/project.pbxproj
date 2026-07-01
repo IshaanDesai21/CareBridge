@@ -1,0 +1,676 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		16B3299C682E38B83E4590A9 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D42E72583C2D66B44EC37 /* JournalView.swift */; };
+		191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */; };
+		20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D4D3B99B4E0A59A16C657 /* RegisterView.swift */; };
+		3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */; };
+		45E0085F93313B4110185AF7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE99782958AC4DDD1DC51580 /* Assets.xcassets */; };
+		4DDC698DC85F49807A0F0100 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F487A18D44FD7A9812F351 /* LoginView.swift */; };
+		7B87DCD08116FFAE19F16F6F /* MedicationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7682D16144CA3917B29CAAE6 /* MedicationsView.swift */; };
+		8C5F1245A52091659412DA47 /* CareBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */; };
+		92FAC51865430690327941DA /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627430257FF5185ECFB14044 /* HomeView.swift */; };
+		97C6846F378BE576C33DC62E /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5090FB142D8B4B144C2D0420 /* APIService.swift */; };
+		9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12B6A71670D68B89C9A86C6C /* TabView.swift */; };
+		9EBE48E72FF4799200701A91 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EBE48E62FF4799200701A91 /* WidgetKit.framework */; };
+		9EBE48E92FF4799300701A91 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EBE48E82FF4799300701A91 /* SwiftUI.framework */; };
+		9EBE48FA2FF4799500701A91 /* CareBridgeWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9EBE49062FF4986900701A91 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE99782958AC4DDD1DC51580 /* Assets.xcassets */; };
+		A96AEF6303344350DFC4AE80 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9BBA5E4000276DC9EA95A8D /* Models.swift */; };
+		B9EED45D004D2B638E76D399 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639552A5B936CD1ECB04602 /* EmptyStateView.swift */; };
+		DB339767017760FD227417C9 /* WellnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA829762EAE5922F423DDBE /* WellnessView.swift */; };
+		E8C4706738AAB307A3DAB5E4 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */; };
+		F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601234567890A /* AddMedicationView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9EBE48F82FF4799500701A91 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AC624116419DEE0734E7D57D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9EBE48E32FF4799200701A91;
+			remoteInfo = CareBridgeWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9EBE48FF2FF4799500701A91 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9EBE48FA2FF4799500701A91 /* CareBridgeWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		12B6A71670D68B89C9A86C6C /* TabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabView.swift; sourceTree = "<group>"; };
+		1DA829762EAE5922F423DDBE /* WellnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessView.swift; sourceTree = "<group>"; };
+		1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		5090FB142D8B4B144C2D0420 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareBridgeApp.swift; sourceTree = "<group>"; };
+		5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		627430257FF5185ECFB14044 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		766D4D3B99B4E0A59A16C657 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		7682D16144CA3917B29CAAE6 /* MedicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsView.swift; sourceTree = "<group>"; };
+		9CA4F64F1295E28C8F63AFF8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareBridgeWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9EBE48E62FF4799200701A91 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		9EBE48E82FF4799300701A91 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A6F487A18D44FD7A9812F351 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		AE99782958AC4DDD1DC51580 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B9BBA5E4000276DC9EA95A8D /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessCheckinView.swift; sourceTree = "<group>"; };
+		EF9D42E72583C2D66B44EC37 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
+		F639552A5B936CD1ECB04602 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F601234567890A /* AddMedicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9EBE48FB2FF4799500701A91 /* Exceptions for "CareBridgeWidget" folder in "CareBridgeWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9EBE48E32FF4799200701A91 /* CareBridgeWidgetExtension */;
+		};
+		9EBE49052FF4986300701A91 /* Exceptions for "CareBridgeWidget" folder in "CareBridge" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = A4A9CE854A9553E6A0B0CF12 /* CareBridge */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9EBE48EA2FF4799300701A91 /* CareBridgeWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9EBE49052FF4986300701A91 /* Exceptions for "CareBridgeWidget" folder in "CareBridge" target */,
+				9EBE48FB2FF4799500701A91 /* Exceptions for "CareBridgeWidget" folder in "CareBridgeWidgetExtension" target */,
+			);
+			path = CareBridgeWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9EBE48E12FF4799200701A91 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9EBE48E92FF4799300701A91 /* SwiftUI.framework in Frameworks */,
+				9EBE48E72FF4799200701A91 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		065D2E0EF212D384DB1495F2 = {
+			isa = PBXGroup;
+			children = (
+				A6CEAE5BD35A2FF54962C485 /* CareBridge */,
+				9EBE48EA2FF4799300701A91 /* CareBridgeWidget */,
+				9EBE48E52FF4799200701A91 /* Frameworks */,
+				1B07AA5096565108167A8242 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		07DD1D5A25A4FED8D9A1212E /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		1B07AA5096565108167A8242 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */,
+				9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3273C702402165231D517008 /* Journal */ = {
+			isa = PBXGroup;
+			children = (
+				EF9D42E72583C2D66B44EC37 /* JournalView.swift */,
+			);
+			path = Journal;
+			sourceTree = "<group>";
+		};
+		3C1663E8B48B01531E898A01 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		425DA6A1052205153E3681BE /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				A6F487A18D44FD7A9812F351 /* LoginView.swift */,
+				766D4D3B99B4E0A59A16C657 /* RegisterView.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		4AF39178144D5145318CBDAC /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F639552A5B936CD1ECB04602 /* EmptyStateView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		4BFE78FF44569D8B6A26CFD4 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				627430257FF5185ECFB14044 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		5AEBCA16CB34CDF3A285946C /* Medications */ = {
+			isa = PBXGroup;
+			children = (
+				7682D16144CA3917B29CAAE6 /* MedicationsView.swift */,
+				A1B2C3D4E5F601234567890A /* AddMedicationView.swift */,
+			);
+			path = Medications;
+			sourceTree = "<group>";
+		};
+		8480286FBBA93A33DAE026D6 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				425DA6A1052205153E3681BE /* Authentication */,
+				4AF39178144D5145318CBDAC /* Components */,
+				4BFE78FF44569D8B6A26CFD4 /* Home */,
+				3273C702402165231D517008 /* Journal */,
+				BC05BC68442F43F57B96E3C3 /* Main */,
+				5AEBCA16CB34CDF3A285946C /* Medications */,
+				07DD1D5A25A4FED8D9A1212E /* Profile */,
+				D7149BBA9C6BEC074540B3E6 /* Wellness */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		8AEAEDCAD7560B24DDE24404 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B9BBA5E4000276DC9EA95A8D /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		9EBE48E52FF4799200701A91 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9EBE48E62FF4799200701A91 /* WidgetKit.framework */,
+				9EBE48E82FF4799300701A91 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A6CEAE5BD35A2FF54962C485 /* CareBridge */ = {
+			isa = PBXGroup;
+			children = (
+				AE99782958AC4DDD1DC51580 /* Assets.xcassets */,
+				50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */,
+				9CA4F64F1295E28C8F63AFF8 /* Info.plist */,
+				3C1663E8B48B01531E898A01 /* Managers */,
+				8AEAEDCAD7560B24DDE24404 /* Models */,
+				FF215CB428B2649A3F90A8C9 /* Services */,
+				8480286FBBA93A33DAE026D6 /* Views */,
+			);
+			path = CareBridge;
+			sourceTree = "<group>";
+		};
+		BC05BC68442F43F57B96E3C3 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				12B6A71670D68B89C9A86C6C /* TabView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		D7149BBA9C6BEC074540B3E6 /* Wellness */ = {
+			isa = PBXGroup;
+			children = (
+				CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */,
+				1DA829762EAE5922F423DDBE /* WellnessView.swift */,
+			);
+			path = Wellness;
+			sourceTree = "<group>";
+		};
+		FF215CB428B2649A3F90A8C9 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				5090FB142D8B4B144C2D0420 /* APIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9EBE48E32FF4799200701A91 /* CareBridgeWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9EBE48FC2FF4799500701A91 /* Build configuration list for PBXNativeTarget "CareBridgeWidgetExtension" */;
+			buildPhases = (
+				9EBE48E02FF4799200701A91 /* Sources */,
+				9EBE48E12FF4799200701A91 /* Frameworks */,
+				9EBE48E22FF4799200701A91 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9EBE48EA2FF4799300701A91 /* CareBridgeWidget */,
+			);
+			name = CareBridgeWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = CareBridgeWidgetExtension;
+			productReference = 9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A4A9CE854A9553E6A0B0CF12 /* CareBridge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8F9E74BD5426BABF490EBD59 /* Build configuration list for PBXNativeTarget "CareBridge" */;
+			buildPhases = (
+				0936B811FA03DFDA8A8BB797 /* Sources */,
+				C77D7B22FD1B379F93154521 /* Resources */,
+				9EBE48FF2FF4799500701A91 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9EBE48F92FF4799500701A91 /* PBXTargetDependency */,
+			);
+			name = CareBridge;
+			packageProductDependencies = (
+			);
+			productName = CareBridge;
+			productReference = 1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AC624116419DEE0734E7D57D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					9EBE48E32FF4799200701A91 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = 50B68C9D6A4D70E2D946B0B2 /* Build configuration list for PBXProject "CareBridge" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 065D2E0EF212D384DB1495F2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1B07AA5096565108167A8242 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A4A9CE854A9553E6A0B0CF12 /* CareBridge */,
+				9EBE48E32FF4799200701A91 /* CareBridgeWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9EBE48E22FF4799200701A91 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9EBE49062FF4986900701A91 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C77D7B22FD1B379F93154521 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				45E0085F93313B4110185AF7 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0936B811FA03DFDA8A8BB797 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97C6846F378BE576C33DC62E /* APIService.swift in Sources */,
+				E8C4706738AAB307A3DAB5E4 /* AuthenticationManager.swift in Sources */,
+				8C5F1245A52091659412DA47 /* CareBridgeApp.swift in Sources */,
+				B9EED45D004D2B638E76D399 /* EmptyStateView.swift in Sources */,
+				92FAC51865430690327941DA /* HomeView.swift in Sources */,
+				16B3299C682E38B83E4590A9 /* JournalView.swift in Sources */,
+				4DDC698DC85F49807A0F0100 /* LoginView.swift in Sources */,
+				7B87DCD08116FFAE19F16F6F /* MedicationsView.swift in Sources */,
+				A96AEF6303344350DFC4AE80 /* Models.swift in Sources */,
+				191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */,
+				20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */,
+				9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */,
+				3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */,
+				DB339767017760FD227417C9 /* WellnessView.swift in Sources */,
+				F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9EBE48E02FF4799200701A91 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9EBE48F92FF4799500701A91 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9EBE48E32FF4799200701A91 /* CareBridgeWidgetExtension */;
+			targetProxy = 9EBE48F82FF4799500701A91 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		35350EBAD6CF9F6A0B8129EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				INFOPLIST_FILE = CareBridge/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		53314C68F6EC093511A03D5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6B8471FC30AF372DB6A54DC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9EBE48FD2FF4799500701A91 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CareBridgeWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CareBridgeWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge.CareBridgeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9EBE48FE2FF4799500701A91 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CareBridgeWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CareBridgeWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge.CareBridgeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FD8F52FF0D38FB82910CD420 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				INFOPLIST_FILE = CareBridge/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		50B68C9D6A4D70E2D946B0B2 /* Build configuration list for PBXProject "CareBridge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53314C68F6EC093511A03D5C /* Debug */,
+				6B8471FC30AF372DB6A54DC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8F9E74BD5426BABF490EBD59 /* Build configuration list for PBXNativeTarget "CareBridge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35350EBAD6CF9F6A0B8129EA /* Debug */,
+				FD8F52FF0D38FB82910CD420 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9EBE48FC2FF4799500701A91 /* Build configuration list for PBXNativeTarget "CareBridgeWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EBE48FD2FF4799500701A91 /* Debug */,
+				9EBE48FE2FF4799500701A91 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AC624116419DEE0734E7D57D /* Project object */;
+}

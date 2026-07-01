@@ -1,9 +1,13 @@
 import SwiftUI
+import WidgetKit
 
 struct WellnessCheckinView: View {
+    var patientId: Int? = nil  // caregiver passes explicit ID; patient fetches their own
+
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
-    
+
+    @State private var resolvedPatientId: Int? = nil
     @State private var energy = 5
     @State private var fatigue = 5
     @State private var pain = 5
@@ -16,8 +20,10 @@ struct WellnessCheckinView: View {
     @State private var appetite = 5
     @State private var hydration = 5
     @State private var swallowingDifficulty = 5
+    @State private var weightKg = ""
     @State private var notes = ""
     @State private var isSubmitting = false
+    @State private var errorMessage: String? = nil
     @State private var currentPage = 0
     
     let pages = 3
@@ -25,8 +31,8 @@ struct WellnessCheckinView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Progress indicator
                 ProgressView(value: Double(currentPage + 1), total: Double(pages))
+                    .tint(.cbPrimary)
                     .padding()
                 
                 TabView(selection: $currentPage) {
@@ -146,14 +152,33 @@ struct WellnessCheckinView: View {
                                 color: .pink
                             )
                             
+                            VStack(alignment: .leading, spacing: 10) {
+                                Label("Weight (optional)", systemImage: "scalemass.fill")
+                                    .font(.headline).foregroundStyle(Color.cbAmber)
+                                HStack(spacing: 10) {
+                                    TextField("e.g. 70.5", text: $weightKg)
+                                        .keyboardType(.decimalPad)
+                                        .padding(.horizontal, 14).padding(.vertical, 11)
+                                        .background(Color.cbBackground)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    Text("kg").font(.subheadline).foregroundStyle(.secondary)
+                                }
+                                Text("Tracks your weight trend over time")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.cbBorder.opacity(0.6), radius: 5, x: 0, y: 2)
+
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Additional Notes", systemImage: "note.text")
                                     .font(.headline)
-                                
+
                                 TextEditor(text: $notes)
                                     .frame(height: 120)
                                     .padding(8)
-                                    .background(Color(.systemGray6))
+                                    .background(Color.cbBackground)
                                     .cornerRadius(8)
                             }
                         }
@@ -174,7 +199,7 @@ struct WellnessCheckinView: View {
                             Text("Previous")
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(.systemGray5))
+                                .background(Color.cbBorder.opacity(0.5))
                                 .foregroundStyle(.primary)
                                 .cornerRadius(12)
                         }
@@ -199,7 +224,7 @@ struct WellnessCheckinView: View {
                             Text(currentPage < pages - 1 ? "Next" : "Submit")
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.blue)
+                                .background(Color.cbPrimary)
                                 .foregroundStyle(.white)
                                 .cornerRadius(12)
                         }
@@ -208,35 +233,45 @@ struct WellnessCheckinView: View {
                 }
                 .padding()
             }
+            .background(Color.cbBackground.ignoresSafeArea())
             .navigationTitle("Daily Check-in")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
+        .task {
+            if let id = patientId {
+                resolvedPatientId = id
+            } else if let token = authManager.token {
+                do {
+                    resolvedPatientId = try await APIService.shared.getMyPatient(token: token)
+                } catch {
+                    errorMessage = "Failed to load patient profile."
+                }
+            }
+        }
+        .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK") { }
+        } message: {
+            if let errorMessage { Text(errorMessage) }
+        }
     }
     
+    @MainActor
     private func submitCheckin() async {
+        guard let token = authManager.token, let pid = resolvedPatientId else {
+            isSubmitting = false
+            return
+        }
         isSubmitting = true
-        
-        // Submit to API
         do {
-            // Get patient ID from user (simplified for MVP)
-            // In production, you'd fetch this from the patient profile
-            let patientId = 1 // Placeholder
-            
-            guard let token = authManager.token else {
-                print("No token available")
-                isSubmitting = false
-                return
-            }
-            
+            let finalNotes: String? = notes.isEmpty ? nil : notes
+            let finalWeight: Double? = weightKg.isEmpty ? nil : Double(weightKg.replacingOccurrences(of: ",", with: "."))
             let _ = try await APIService.shared.createWellnessCheckin(
-                patientId: patientId,
+                patientId: pid,
                 energy: energy,
                 fatigue: fatigue,
                 pain: pain,
@@ -249,15 +284,32 @@ struct WellnessCheckinView: View {
                 appetite: appetite,
                 hydration: hydration,
                 swallowingDifficulty: swallowingDifficulty,
-                notes: notes.isEmpty ? nil : notes,
+                weight: finalWeight,
+                notes: finalNotes,
                 token: token
             )
-            
+            // Push data to home screen widget
+            let sum1 = Double(energy) + Double(11 - fatigue) + Double(11 - pain)
+            let sum2 = Double(mood) + Double(sleepQuality) + Double(breathing)
+            let sum3 = Double(mobility) + Double(balance) + Double(speechClarity)
+            let sum4 = Double(appetite) + Double(hydration) + Double(11 - swallowingDifficulty)
+            let totalSum = sum1 + sum2 + sum3 + sum4
+            let average = (totalSum / 12.0) * 10.0
+            let wellnessScore = min(100, max(0, Int(average)))
+            let suite = UserDefaults(suiteName: "group.com.carebridge.app")
+            let fullName = [authManager.currentUser?.firstName, authManager.currentUser?.lastName].compactMap { $0 }.joined(separator: " ")
+            suite?.set(fullName, forKey: "widget_patient_name")
+            suite?.set(wellnessScore, forKey: "widget_wellness_score")
+            suite?.set(energy, forKey: "widget_energy")
+            suite?.set(mood, forKey: "widget_mood")
+            let fmt = DateFormatter(); fmt.dateStyle = .short; fmt.timeStyle = .short
+            suite?.set(fmt.string(from: Date()), forKey: "widget_last_checkin")
+            WidgetCenter.shared.reloadAllTimelines()
             dismiss()
         } catch {
             print("Error submitting check-in: \(error)")
+            errorMessage = "Failed to submit check-in. Please try again."
         }
-        
         isSubmitting = false
     }
 }
@@ -303,9 +355,9 @@ struct SliderRow: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.white)
         .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.cbBorder.opacity(0.6), radius: 5, x: 0, y: 2)
     }
 }
 
