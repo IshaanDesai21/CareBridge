@@ -1,27 +1,16 @@
 {
-  "name": "carebridge-backend",
+  "name": "carebridge",
   "version": "1.0.0",
-  "description": "CareBridge API - Healthcare coordination platform backend",
-  "main": "src/server.js",
-  "type": "module",
+  "description": "CareBridge — AI-powered healthcare coordination platform",
+  "private": true,
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
-  },
-  "keywords": ["healthcare", "caregiving", "api"],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "dotenv": "^16.3.1",
-    "pg": "^8.11.3",
-    "bcrypt": "^5.1.1",
-    "jsonwebtoken": "^9.0.2",
-    "winston": "^3.11.0"
+    "dev": "concurrently --names \"API,UI\" --prefix-colors \"blue,cyan\" \"npm run dev --prefix backend\" \"npm run dev --prefix dashboard\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:dashboard": "npm run dev --prefix dashboard",
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix dashboard",
+    "build": "npm run build --prefix dashboard"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "concurrently": "^8.2.2"
   }
 }
