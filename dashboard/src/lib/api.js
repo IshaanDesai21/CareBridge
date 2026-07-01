@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 /**
  * Core fetch wrapper with auth token support and consistent error handling.
@@ -26,10 +26,10 @@ async function request(path, options = {}) {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-export function register(email, password, firstName, lastName, role = 'caregiver') {
+export function register(email, password, firstName, lastName, role = 'caregiver', joinCode = null) {
     return request('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, firstName, lastName, role })
+        body: JSON.stringify({ email, password, firstName, lastName, role, ...(joinCode ? { joinCode } : {}) })
     });
 }
 
@@ -128,6 +128,24 @@ export function createCareNote(data) {
     return request('/api/care-notes', { method: 'POST', body: JSON.stringify(data) });
 }
 
+// ─── Family ───────────────────────────────────────────────────────────────────
+
+export function getLinkedPatient() {
+    return request('/api/family/patient');
+}
+
+export function familyLink(code) {
+    return request('/api/family/link', { method: 'POST', body: JSON.stringify({ code }) });
+}
+
+export function getPatientJoinCode(patientId) {
+    return request(`/api/patients/${patientId}/join-code`);
+}
+
+export function getPatientDetails(patientId) {
+    return request(`/api/patients/${patientId}/details`);
+}
+
 // ─── AI ───────────────────────────────────────────────────────────────────────
 
 export function getAiInsights(patientId) {
@@ -136,4 +154,18 @@ export function getAiInsights(patientId) {
 
 export function generateAiSummary(patientId) {
     return request(`/api/ai/summary/${patientId}`, { method: 'POST' });
+}
+
+export function getAiOverview(patientId) {
+    return request(`/api/ai/overview/${patientId}`);
+}
+
+// ─── Alerts ───────────────────────────────────────────────────────────────────
+
+export function getAlerts() {
+    return request('/api/alerts');
+}
+
+export function acknowledgeAlert(id) {
+    return request(`/api/alerts/${id}/acknowledge`, { method: 'PUT' });
 }

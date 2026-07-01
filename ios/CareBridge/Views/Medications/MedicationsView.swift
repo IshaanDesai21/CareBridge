@@ -23,15 +23,6 @@ struct MedicationsView: View {
                 }
             }
             .navigationTitle("Medications")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        // Add medication
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
             .task {
                 await loadMedications()
             }
@@ -39,8 +30,14 @@ struct MedicationsView: View {
     }
     
     private func loadMedications() async {
+        guard let token = authManager.token else { return }
         isLoading = true
-        // Load from API
+        do {
+            let pid = try await APIService.shared.getMyPatient(token: token)
+            medications = try await APIService.shared.getMedications(patientId: pid, token: token)
+        } catch {
+            print("Failed to load medications: \(error)")
+        }
         isLoading = false
     }
 }

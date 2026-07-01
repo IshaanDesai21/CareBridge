@@ -8,35 +8,74 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showingRegister = false
+    @State private var showServerConfig = false
+    @State private var serverURLInput = UserDefaults.standard.string(forKey: APIService.serverURLKey) ?? APIService.defaultServerURL
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
+                Color.cbBackground.ignoresSafeArea()
+
+                ScrollView {
                 VStack(spacing: 30) {
-                    Spacer()
+                    Spacer().frame(height: 20)
                     
                     // Logo and title
                     VStack(spacing: 16) {
-                        Image(systemName: "heart.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundStyle(.blue)
+                        if let uiImage = UIImage(named: "Logo"), uiImage.size.width > 0 {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 88, height: 88)
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                                .shadow(color: Color.cbPrimary.opacity(0.2), radius: 12, x: 0, y: 4)
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .fill(Color.cbPrimary.opacity(0.1))
+                                    .frame(width: 88, height: 88)
+                                Image(systemName: "heart.circle.fill")
+                                    .font(.system(size: 52))
+                                    .foregroundStyle(Color.cbPrimary)
+                            }
+                        }
                         
                         Text("CareBridge")
-                            .font(.system(size: 42, weight: .bold, design: .rounded))
+                            .font(.system(size: 42, weight: .bold, design: .serif))
                         
                         Text("Healthcare Coordination")
                             .font(.title3)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 20)
+                    
+                    // Demo logins
+                    VStack(spacing: 12) {
+                        Text("Quick Testing Login")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.cbPrimary)
+                            .textCase(.uppercase)
+                        
+                        HStack(spacing: 8) {
+                            ForEach([("patient", "Patient"), ("caregiver", "Caregiver"), ("family", "Family")], id: \.0) { role, label in
+                                Button(action: {
+                                    Task { await demoLogin(role: role) }
+                                }) {
+                                    Text(label)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 10)
+                                        .background(Color.cbPrimary.opacity(0.08))
+                                        .foregroundStyle(Color.cbPrimary)
+                                        .cornerRadius(8)
+                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.cbPrimary.opacity(0.25), lineWidth: 1))
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom, 20)
                     
                     // Login form
                     VStack(spacing: 20) {
@@ -44,20 +83,20 @@ struct LoginView: View {
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
                             .padding()
-                            .background(Color(.systemBackground))
+                            .background(Color.white)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.cbBorder, lineWidth: 1.5)
                             )
-                        
+
                         SecureField("Password", text: $password)
                             .padding()
-                            .background(Color(.systemBackground))
+                            .background(Color.white)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.cbBorder, lineWidth: 1.5)
                             )
                         
                         if let errorMessage = errorMessage {
@@ -86,7 +125,7 @@ struct LoginView: View {
                                     .padding()
                             }
                         }
-                        .background(Color.blue)
+                        .background(Color.cbPrimary)
                         .cornerRadius(12)
                         .disabled(isLoading || email.isEmpty || password.isEmpty)
                         
@@ -97,17 +136,56 @@ struct LoginView: View {
                                 .font(.subheadline)
                         }
                     }
-                    .padding(.horizontal, 32)
-                    
-                    Spacer()
+
+                    // Server config
+                    Button(action: { withAnimation { showServerConfig.toggle() } }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "network")
+                                .font(.system(size: 11))
+                            Text(showServerConfig ? "Hide Server Settings" : "Server Settings")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(Color.cbBorder)
+                    }
+
+                    if showServerConfig {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Backend Server URL")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+                            TextField("http://192.168.1.x:3000", text: $serverURLInput)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .keyboardType(.URL)
+                                .padding(12)
+                                .background(Color.white)
+                                .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.cbBorder, lineWidth: 1.5))
+                                .onChange(of: serverURLInput) { _, newValue in
+                                    UserDefaults.standard.set(newValue, forKey: APIService.serverURLKey)
+                                }
+                            Text("On device, enter your Mac's local IP instead of localhost.\nFind it: System Settings → Network → Wi-Fi → Details → IP Address\nExample: http://192.168.1.42:3000")
+                                .font(.caption2)
+                                .foregroundStyle(Color(red: 0.5, green: 0.55, blue: 0.62))
+                                .lineSpacing(3)
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
+                    Spacer().frame(height: 20)
                 }
+                .padding(.horizontal, 32)
+                } // ScrollView
             }
             .sheet(isPresented: $showingRegister) {
                 RegisterView()
+                    .environmentObject(authManager)
             }
         }
     }
     
+    @MainActor
     private func login() async {
         isLoading = true
         errorMessage = nil
@@ -116,6 +194,32 @@ struct LoginView: View {
             try await authManager.login(email: email, password: password)
         } catch {
             errorMessage = error.localizedDescription
+        }
+        
+        isLoading = false
+    }
+    
+    @MainActor
+    private func demoLogin(role: String) async {
+        isLoading = true
+        errorMessage = nil
+        
+        let demoEmail = "\(role)@demo.com"
+        do {
+            try await authManager.login(email: demoEmail, password: "demo1234")
+        } catch {
+            do {
+                try await authManager.register(
+                    email: demoEmail,
+                    password: "demo1234",
+                    firstName: "Demo",
+                    lastName: role.capitalized,
+                    role: role,
+                    phone: role == "family" ? "555-000-0000" : nil
+                )
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
         
         isLoading = false

@@ -169,6 +169,55 @@ function initializeTables() {
       is_read INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS join_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE NOT NULL,
+      patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS family_patient_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      family_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(family_user_id, patient_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS patient_alerts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+      message TEXT NOT NULL,
+      is_urgent INTEGER DEFAULT 0,
+      is_acknowledged INTEGER DEFAULT 0,
+      acknowledged_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Migrations for existing databases
+  try { db.exec('ALTER TABLE users ADD COLUMN phone TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN gender TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN height_cm REAL'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN weight_kg REAL'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN hearing_notes TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN vision_score TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN emergency_contacts TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN care_team TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN ai_companion_name TEXT'); } catch (e) { /* exists */ }
+  try { db.exec('ALTER TABLE patients ADD COLUMN ai_companion_gender TEXT'); } catch (e) { /* exists */ }
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      type TEXT DEFAULT 'alert',
+      is_read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   logger.info('Database tables initialized');
