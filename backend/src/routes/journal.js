@@ -7,10 +7,10 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get journal entries
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const db = getDb();
-    const entries = db.prepare(
+    const entries = await db.prepare(
       'SELECT * FROM journal_entries WHERE patient_id = ? ORDER BY created_at DESC'
     ).all(req.params.patientId);
     res.json({ entries });
@@ -21,17 +21,17 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Create journal entry
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { patientId, title, content, mood, isShared } = req.body;
 
     const db = getDb();
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO journal_entries (patient_id, title, content, mood, is_shared)
       VALUES (?, ?, ?, ?, ?)
     `).run(patientId, title ?? null, content ?? null, mood ?? null, isShared ? 1 : 0);
 
-    const entry = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(result.lastInsertRowid);
+    const entry = await db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ entry });
   } catch (error) {
     logger.error('Create journal entry error:', error);
@@ -40,12 +40,12 @@ router.post('/', (req, res) => {
 });
 
 // Update journal entry
-router.put('/:entryId', (req, res) => {
+router.put('/:entryId', async (req, res) => {
   try {
     const { title, content, mood, isShared } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE journal_entries SET
         title = COALESCE(?, title),
         content = COALESCE(?, content),
@@ -59,7 +59,7 @@ router.put('/:entryId', (req, res) => {
       req.params.entryId
     );
 
-    const entry = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(req.params.entryId);
+    const entry = await db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(req.params.entryId);
     if (!entry) return res.status(404).json({ error: 'Journal entry not found' });
     res.json({ entry });
   } catch (error) {
@@ -69,10 +69,10 @@ router.put('/:entryId', (req, res) => {
 });
 
 // Delete journal entry
-router.delete('/:entryId', (req, res) => {
+router.delete('/:entryId', async (req, res) => {
   try {
     const db = getDb();
-    const info = db.prepare('DELETE FROM journal_entries WHERE id = ?').run(req.params.entryId);
+    const info = await db.prepare('DELETE FROM journal_entries WHERE id = ?').run(req.params.entryId);
     if (info.changes === 0) return res.status(404).json({ error: 'Journal entry not found' });
     res.json({ message: 'Journal entry deleted successfully' });
   } catch (error) {

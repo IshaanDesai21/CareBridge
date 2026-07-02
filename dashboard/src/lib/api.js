@@ -44,6 +44,13 @@ export function getMe() {
     return request('/api/auth/me');
 }
 
+export function loginWithGoogle(idToken, role = 'caregiver', joinCode = null) {
+    return request('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ idToken, role, ...(joinCode ? { joinCode } : {}) })
+    });
+}
+
 // ─── Patients ─────────────────────────────────────────────────────────────────
 
 export function getPatients() {

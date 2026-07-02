@@ -57,24 +57,24 @@ router.get('/overview/:patientId', async (req, res) => {
     const { patientId } = req.params;
     const db = getDb();
 
-    const patient = db.prepare(`
+    const patient = await db.prepare(`
       SELECT p.*, u.first_name, u.last_name, u.email
       FROM patients p JOIN users u ON p.user_id = u.id
       WHERE p.id = ?
     `).get(patientId);
     if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
-    const checkins = db.prepare(`
+    const checkins = await db.prepare(`
       SELECT * FROM wellness_checkins WHERE patient_id = ?
       ORDER BY created_at DESC LIMIT 7
     `).all(patientId);
 
-    const meds = db.prepare(`
+    const meds = await db.prepare(`
       SELECT name, dosage, frequency FROM medications
       WHERE patient_id = ? AND is_active = 1
     `).all(patientId);
 
-    const notes = db.prepare(`
+    const notes = await db.prepare(`
       SELECT cn.*, u.first_name || ' ' || u.last_name AS caregiver_name
       FROM care_notes cn
       LEFT JOIN users u ON cn.caregiver_id = u.id
@@ -114,7 +114,7 @@ Write a 3-4 sentence handoff summary covering: current status, key concerns, and
     const overview = await callAI(systemPrompt, userPrompt, 1024, SUMMARY_MODEL);
 
     // Cache as an AI insight so it shows in the insights tab too
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO ai_insights (patient_id, insight_type, title, description, severity)
       VALUES (?, 'summary', 'AI Handoff Overview', ?, 'low')
     `).run(patientId, overview);
@@ -127,10 +127,10 @@ Write a 3-4 sentence handoff summary covering: current status, key concerns, and
 });
 
 // ─── Get AI insights ──────────────────────────────────────────────────────────
-router.get('/insights/:patientId', (req, res) => {
+router.get('/insights/:patientId', async (req, res) => {
   try {
     const db = getDb();
-    const insights = db.prepare(`
+    const insights = await db.prepare(`
       SELECT * FROM ai_insights
       WHERE patient_id = ?
       ORDER BY created_at DESC
@@ -145,11 +145,11 @@ router.get('/insights/:patientId', (req, res) => {
 
 // ─── Chat history ──────────────────────────────────────────────────────────────
 // GET /api/ai/chat/history — the last N turns for the current user, oldest first
-router.get('/chat/history', (req, res) => {
+router.get('/chat/history', async (req, res) => {
   try {
     const db = getDb();
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
       SELECT id, role, content, created_at FROM chat_messages
       WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
     `).all(req.user.id, limit);
@@ -167,12 +167,12 @@ router.post('/chat', async (req, res) => {
     const db = getDb();
 
     if (message) {
-      db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'user', ?)`)
+      await db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'user', ?)`)
         .run(req.user.id, message);
     }
 
     // Pull companion info from patient record
-    const patientRecord = db.prepare(`
+    const patientRecord = await db.prepare(`
       SELECT p.ai_companion_name, p.ai_companion_gender, p.gender, u.first_name
       FROM patients p JOIN users u ON p.user_id = u.id
       WHERE p.user_id = ?
@@ -214,10 +214,10 @@ Rules:
       // Prefer the server's own memory of this conversation (chat_messages) over
       // whatever the client sends, so the companion remembers across app launches.
       // Exclude the user turn we just inserted — it's appended explicitly below.
-      const storedHistory = db.prepare(`
+      const storedHistory = (await db.prepare(`
         SELECT role, content FROM chat_messages
         WHERE user_id = ? ORDER BY created_at DESC LIMIT 21
-      `).all(req.user.id).reverse();
+      `).all(req.user.id)).reverse();
       // The user turn we just inserted is the last row — drop it, it's re-added explicitly below
       const history = storedHistory.slice(0, -1);
       const userTurn = { role: 'user', content: message };
@@ -235,7 +235,7 @@ Rules:
       reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
 
-    db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'assistant', ?)`)
+    await db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'assistant', ?)`)
       .run(req.user.id, reply);
 
     res.json({ message: reply, companionName, timestamp: new Date().toISOString() });
@@ -315,19 +315,22 @@ router.get('/summary/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
     const db = getDb();
-    const wellnessData = db.prepare(`
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const cutoffDate = sevenDaysAgo.toISOString().split('T')[0];
+    const wellnessData = await db.prepare(`
       SELECT * FROM wellness_checkins
-      WHERE patient_id = ? AND date >= date('now', '-7 days')
+      WHERE patient_id = ? AND date >= ?
       ORDER BY date DESC
-    `).all(patientId);
+    `).all(patientId, cutoffDate);
 
-    const medData = db.prepare(`
+    const medData = await db.prepare(`
       SELECT COUNT(*) as total,
              SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as taken
       FROM medication_logs ml
       JOIN medications m ON ml.medication_id = m.id
-      WHERE m.patient_id = ? AND ml.scheduled_time >= datetime('now', '-7 days')
-    `).get(patientId);
+      WHERE m.patient_id = ? AND ml.scheduled_time >= ?
+    `).get(patientId, sevenDaysAgo.toISOString());
 
     const total = medData?.total ?? 0;
     const taken = medData?.taken ?? 0;

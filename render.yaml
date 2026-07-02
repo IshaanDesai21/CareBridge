@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: carebridge-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false # paste your Neon Postgres connection string here
+      - key: CORS_ORIGIN
+        value: https://carebridge.ftcblueprint.com
+      - key: GOOGLE_WEB_CLIENT_ID
+        sync: false
+      - key: GOOGLE_IOS_CLIENT_ID
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+
+  - type: web
+    name: carebridge-dashboard
+    runtime: node
+    plan: free
+    rootDir: dashboard
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.carebridge.ftcblueprint.com
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false

@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Create wellness check-in
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       patientId,
@@ -18,15 +18,16 @@ router.post('/', (req, res) => {
     } = req.body;
 
     const db = getDb();
+    const today = new Date().toISOString().split('T')[0];
 
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO wellness_checkins (
         patient_id, date, energy, fatigue, pain, mood, sleep_quality,
         breathing, mobility, balance, speech_clarity, appetite,
         hydration, swallowing_difficulty, weight, notes
-      ) VALUES (?, date('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      patientId, energy, fatigue, pain, mood, sleepQuality,
+      patientId, today, energy, fatigue, pain, mood, sleepQuality,
       breathing, mobility, balance, speechClarity, appetite,
       hydration, swallowingDifficulty, weight ?? null, notes ?? null
     );
@@ -38,10 +39,10 @@ router.post('/', (req, res) => {
         hydration + (11 - swallowingDifficulty)) / 12) * 10
     );
 
-    db.prepare('UPDATE patients SET wellness_score = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+    await db.prepare('UPDATE patients SET wellness_score = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .run(avgScore, patientId);
 
-    const checkin = db.prepare('SELECT * FROM wellness_checkins WHERE id = ?').get(result.lastInsertRowid);
+    const checkin = await db.prepare('SELECT * FROM wellness_checkins WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ checkin, wellnessScore: avgScore });
   } catch (error) {
     logger.error('Create wellness check-in error:', error);
@@ -50,17 +51,20 @@ router.post('/', (req, res) => {
 });
 
 // Get wellness history for patient
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
     const db = getDb();
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffDate = cutoff.toISOString().split('T')[0];
 
-    const checkins = db.prepare(`
+    const checkins = await db.prepare(`
       SELECT * FROM wellness_checkins
       WHERE patient_id = ?
-        AND date >= date('now', ? || ' days')
+        AND date >= ?
       ORDER BY date DESC
-    `).all(req.params.patientId, `-${days}`);
+    `).all(req.params.patientId, cutoffDate);
 
     res.json({ checkins });
   } catch (error) {
@@ -70,13 +74,14 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Get today's check-in
-router.get('/:patientId/today', (req, res) => {
+router.get('/:patientId/today', async (req, res) => {
   try {
     const db = getDb();
-    const checkin = db.prepare(`
+    const today = new Date().toISOString().split('T')[0];
+    const checkin = await db.prepare(`
       SELECT * FROM wellness_checkins
-      WHERE patient_id = ? AND date = date('now')
-    `).get(req.params.patientId);
+      WHERE patient_id = ? AND date = ?
+    `).get(req.params.patientId, today);
 
     res.json({ checkin: checkin ?? null, completed: !!checkin });
   } catch (error) {

@@ -1,5 +1,6 @@
 
 import SwiftUI
+import GoogleSignIn
 
 struct LoginView: View {
     @EnvironmentObject var authManager: AuthenticationManager
@@ -135,6 +136,30 @@ struct LoginView: View {
                             Text("Don't have an account? **Sign Up**")
                                 .font(.subheadline)
                         }
+
+                        HStack {
+                            Rectangle().fill(Color.cbBorder).frame(height: 1)
+                            Text("or").font(.caption).foregroundStyle(.secondary)
+                            Rectangle().fill(Color.cbBorder).frame(height: 1)
+                        }
+                        .padding(.vertical, 4)
+
+                        Button {
+                            signInWithGoogle()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "globe")
+                                Text("Sign in with Google")
+                                    .font(.headline)
+                            }
+                            .foregroundStyle(Color.black.opacity(0.87))
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                        }
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cbBorder, lineWidth: 1.5))
+                        .disabled(isLoading)
                     }
 
                     // Server config
@@ -205,6 +230,33 @@ struct LoginView: View {
         errorMessage = nil
         authManager.loginAsDemo(role: role)
         isLoading = false
+    }
+
+    private func signInWithGoogle() {
+        guard let rootVC = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow })?.rootViewController
+        else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { result, error in
+            Task { @MainActor in
+                guard let idToken = result?.user.idToken?.tokenString else {
+                    errorMessage = error?.localizedDescription ?? "Google sign-in failed"
+                    isLoading = false
+                    return
+                }
+                do {
+                    try await authManager.loginWithGoogle(idToken: idToken, role: "patient")
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
+                isLoading = false
+            }
+        }
     }
 }
 

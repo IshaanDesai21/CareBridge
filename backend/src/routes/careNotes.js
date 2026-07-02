@@ -7,10 +7,10 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get care notes for patient
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const db = getDb();
-    const notes = db.prepare(`
+    const notes = await db.prepare(`
       SELECT cn.*, u.first_name, u.last_name
       FROM care_notes cn
       LEFT JOIN users u ON cn.caregiver_id = u.id
@@ -25,18 +25,18 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Create care note
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { patientId, noteType, content } = req.body;
     const caregiverId = req.user.id;
 
     const db = getDb();
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO care_notes (patient_id, caregiver_id, note_type, content)
       VALUES (?, ?, ?, ?)
     `).run(patientId, caregiverId, noteType ?? null, content);
 
-    const note = db.prepare('SELECT * FROM care_notes WHERE id = ?').get(result.lastInsertRowid);
+    const note = await db.prepare('SELECT * FROM care_notes WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ note });
   } catch (error) {
     logger.error('Create care note error:', error);
@@ -45,12 +45,12 @@ router.post('/', (req, res) => {
 });
 
 // Update care note
-router.put('/:noteId', (req, res) => {
+router.put('/:noteId', async (req, res) => {
   try {
     const { noteType, content } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE care_notes SET
         note_type = COALESCE(?, note_type),
         content = COALESCE(?, content),
@@ -58,7 +58,7 @@ router.put('/:noteId', (req, res) => {
       WHERE id = ?
     `).run(noteType ?? null, content ?? null, req.params.noteId);
 
-    const note = db.prepare('SELECT * FROM care_notes WHERE id = ?').get(req.params.noteId);
+    const note = await db.prepare('SELECT * FROM care_notes WHERE id = ?').get(req.params.noteId);
     if (!note) return res.status(404).json({ error: 'Care note not found' });
     res.json({ note });
   } catch (error) {

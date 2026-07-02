@@ -33,6 +33,14 @@ class AuthenticationManager: ObservableObject {
         UserDefaults.standard.set(response.token, forKey: "authToken")
     }
 
+    func loginWithGoogle(idToken: String, role: String = "patient") async throws {
+        let response = try await apiService.loginWithGoogle(idToken: idToken, role: role)
+        self.token = response.token
+        self.currentUser = response.user
+        self.isAuthenticated = true
+        UserDefaults.standard.set(response.token, forKey: "authToken")
+    }
+
     func register(email: String, password: String, firstName: String, lastName: String, role: String = "patient", phone: String? = nil, joinCode: String? = nil) async throws {
         let response = try await apiService.register(
             email: email, password: password, role: role,

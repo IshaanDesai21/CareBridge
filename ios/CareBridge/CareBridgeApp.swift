@@ -1,4 +1,5 @@
 import SwiftUI
+import GoogleSignIn
 
 // ─── CareBridge Color Palette ─────────────────────────────────────────────────
 extension Color {
@@ -121,30 +122,35 @@ struct CareBridgeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if authManager.isAuthenticated {
-                if hipaaAccepted {
-                    MainTabView()
-                        .environmentObject(authManager)
-                        .environmentObject(accessibility)
-                        .preferredColorScheme(.light)
-                        .accessibleRoot()
-                        .onAppear { LiveNotificationsManager.shared.connect(authManager: authManager) }
-                        .onChange(of: authManager.isAuthenticated) { _, isAuthed in
-                            if !isAuthed { LiveNotificationsManager.shared.disconnect() }
-                        }
+            Group {
+                if authManager.isAuthenticated {
+                    if hipaaAccepted {
+                        MainTabView()
+                            .environmentObject(authManager)
+                            .environmentObject(accessibility)
+                            .preferredColorScheme(.light)
+                            .accessibleRoot()
+                            .onAppear { LiveNotificationsManager.shared.connect(authManager: authManager) }
+                            .onChange(of: authManager.isAuthenticated) { _, isAuthed in
+                                if !isAuthed { LiveNotificationsManager.shared.disconnect() }
+                            }
+                    } else {
+                        HIPAAConsentView(onAccept: { hipaaAccepted = true })
+                            .environmentObject(authManager)
+                            .environmentObject(accessibility)
+                            .preferredColorScheme(.light)
+                            .accessibleRoot()
+                    }
                 } else {
-                    HIPAAConsentView(onAccept: { hipaaAccepted = true })
+                    LoginView()
                         .environmentObject(authManager)
                         .environmentObject(accessibility)
                         .preferredColorScheme(.light)
                         .accessibleRoot()
                 }
-            } else {
-                LoginView()
-                    .environmentObject(authManager)
-                    .environmentObject(accessibility)
-                    .preferredColorScheme(.light)
-                    .accessibleRoot()
+            }
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
             }
         }
     }
