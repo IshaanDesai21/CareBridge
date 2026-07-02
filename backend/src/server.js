@@ -3,10 +3,11 @@ import os from 'os';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import logger from './utils/logger.js';
-import { connectDatabase } from './database/db.js';
+import { connectDatabase, getDb } from './database/db.js';
 import { seedDemoData } from './database/seed.js';
 import { authenticateSocket } from './utils/ws.js';
 
@@ -22,9 +23,42 @@ import aiRoutes from './routes/ai.js';
 import familyRoutes from './routes/family.js';
 import alertRoutes from './routes/alerts.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+// ── Required-config check ─────────────────────────────────────────────────────
+// In production we refuse to boot with missing/weak secrets rather than silently
+// falling back to insecure defaults. In development we only warn.
+function validateEnv() {
+  const problems = [];
+  const weakJwt = !process.env.JWT_SECRET
+    || process.env.JWT_SECRET.length < 32
+    || /change-in-production|dev-secret|super-secret-key/i.test(process.env.JWT_SECRET);
+
+  if (weakJwt) problems.push('JWT_SECRET is missing or weak (need a long random value, 32+ chars).');
+  if (!process.env.DATABASE_URL) problems.push('DATABASE_URL is not set (Postgres connection string).');
+  if (/user:password@host\/dbname/.test(process.env.DATABASE_URL || '')) {
+    problems.push('DATABASE_URL is still the placeholder value.');
+  }
+
+  if (problems.length) {
+    if (isProduction) {
+      logger.error('Refusing to start — fix these environment problems:');
+      problems.forEach((p) => logger.error(`  • ${p}`));
+      process.exit(1);
+    } else {
+      problems.forEach((p) => logger.warn(`⚠️  ${p}`));
+    }
+  }
+}
+validateEnv();
+
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
+
+// Behind Render/Heroku/any reverse proxy: trust the first proxy so rate limiting
+// and secure-cookie logic see the real client IP, not the proxy's.
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
@@ -44,18 +78,51 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    database: 'SQLite'
-  });
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// A broad limiter across the API, plus a much stricter one on auth endpoints to
+// slow credential-stuffing / brute-force attempts.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please slow down and try again shortly.' }
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // login/register/google attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many attempts. Please wait a few minutes and try again.' }
+});
+app.use('/api/', apiLimiter);
+
+// Health check — reports the real DB engine and pings it so uptime monitors
+// (and Render's healthCheckPath) fail if the database is unreachable.
+app.get('/health', async (req, res) => {
+  try {
+    await getDb().prepare('SELECT 1').get();
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      database: 'postgres',
+      db: 'connected'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'degraded',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      database: 'postgres',
+      db: 'unreachable'
+    });
+  }
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/wellness', wellnessRoutes);
 app.use('/api/medications', medicationRoutes);
