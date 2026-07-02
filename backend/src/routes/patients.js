@@ -7,12 +7,12 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get all patients (for caregivers/org) or linked patients (for family)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
     let patients;
     if (req.user.role === 'family') {
-      patients = db.prepare(`
+      patients = await db.prepare(`
         SELECT p.*, u.email, u.first_name, u.last_name
         FROM family_patient_links fpl
         JOIN patients p ON fpl.patient_id = p.id
@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
         WHERE fpl.family_user_id = ?
       `).all(req.user.id);
     } else {
-      patients = db.prepare(`
+      patients = await db.prepare(`
         SELECT p.*, u.email, u.first_name, u.last_name
         FROM patients p
         JOIN users u ON p.user_id = u.id
@@ -35,10 +35,10 @@ router.get('/', (req, res) => {
 });
 
 // Get current user's own patient record (patient role only)
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
   try {
     const db = getDb();
-    const patient = db.prepare(`
+    const patient = await db.prepare(`
       SELECT p.*, u.email, u.first_name, u.last_name
       FROM patients p JOIN users u ON p.user_id = u.id
       WHERE p.user_id = ?
@@ -52,13 +52,13 @@ router.get('/me', (req, res) => {
 });
 
 // Get join code for a patient (caregivers/org only)
-router.get('/:patientId/join-code', (req, res) => {
+router.get('/:patientId/join-code', async (req, res) => {
   try {
     if (!['caregiver', 'organization'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     const db = getDb();
-    const record = db.prepare('SELECT code FROM join_codes WHERE patient_id = ?').get(req.params.patientId);
+    const record = await db.prepare('SELECT code FROM join_codes WHERE patient_id = ?').get(req.params.patientId);
     if (!record) return res.status(404).json({ error: 'No join code found for this patient' });
     res.json({ code: record.code });
   } catch (error) {
@@ -68,10 +68,10 @@ router.get('/:patientId/join-code', (req, res) => {
 });
 
 // Get patient profile
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const db = getDb();
-    const patient = db.prepare(`
+    const patient = await db.prepare(`
       SELECT p.*, u.email, u.first_name, u.last_name
       FROM patients p
       JOIN users u ON p.user_id = u.id
@@ -89,10 +89,10 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Get physical + extended details for a patient (caregiver/org only)
-router.get('/:patientId/details', (req, res) => {
+router.get('/:patientId/details', async (req, res) => {
   try {
     const db = getDb();
-    const patient = db.prepare(`
+    const patient = await db.prepare(`
       SELECT p.id, p.gender, p.height_cm, p.weight_kg, p.hearing_notes, p.vision_score,
              p.emergency_contacts, p.care_team, p.medical_history, p.diagnoses, p.allergies,
              p.ai_companion_name, p.ai_companion_gender, p.date_of_birth, p.wellness_score,
@@ -117,7 +117,7 @@ router.get('/:patientId/details', (req, res) => {
 });
 
 // Update patient physical + extended details (caregiver/patient)
-router.patch('/:patientId/details', (req, res) => {
+router.patch('/:patientId/details', async (req, res) => {
   try {
     const {
       gender, heightCm, weightKg, hearingNotes, visionScore,
@@ -126,7 +126,7 @@ router.patch('/:patientId/details', (req, res) => {
     } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE patients SET
         gender = COALESCE(?, gender),
         height_cm = COALESCE(?, height_cm),
@@ -166,7 +166,7 @@ router.patch('/:patientId/details', (req, res) => {
 });
 
 // Update patient profile
-router.put('/:patientId', (req, res) => {
+router.put('/:patientId', async (req, res) => {
   try {
     const {
       dateOfBirth, phone, emergencyContactName, emergencyContactPhone,
@@ -174,7 +174,7 @@ router.put('/:patientId', (req, res) => {
     } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE patients SET
         date_of_birth = COALESCE(?, date_of_birth),
         phone = COALESCE(?, phone),
@@ -195,7 +195,7 @@ router.put('/:patientId', (req, res) => {
       req.params.patientId
     );
 
-    const patient = db.prepare('SELECT * FROM patients WHERE id = ?').get(req.params.patientId);
+    const patient = await db.prepare('SELECT * FROM patients WHERE id = ?').get(req.params.patientId);
     if (!patient) return res.status(404).json({ error: 'Patient not found' });
     res.json({ patient });
   } catch (error) {

@@ -7,16 +7,20 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get appointments for patient
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const upcoming = req.query.upcoming !== 'false';
     const db = getDb();
 
     let sql = 'SELECT * FROM appointments WHERE patient_id = ?';
-    if (upcoming) sql += ` AND appointment_date >= datetime('now')`;
+    const params = [req.params.patientId];
+    if (upcoming) {
+      sql += ' AND appointment_date >= ?';
+      params.push(new Date().toISOString());
+    }
     sql += ' ORDER BY appointment_date ASC';
 
-    const appointments = db.prepare(sql).all(req.params.patientId);
+    const appointments = await db.prepare(sql).all(...params);
     res.json({ appointments });
   } catch (error) {
     logger.error('Get appointments error:', error);
@@ -25,7 +29,7 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Create appointment
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       patientId, title, type, providerName, location,
@@ -33,7 +37,7 @@ router.post('/', (req, res) => {
     } = req.body;
 
     const db = getDb();
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO appointments (
         patient_id, title, type, provider_name, location,
         appointment_date, duration_minutes, notes, questions
@@ -44,7 +48,7 @@ router.post('/', (req, res) => {
       questions ? JSON.stringify(questions) : null
     );
 
-    const appointment = db.prepare('SELECT * FROM appointments WHERE id = ?').get(result.lastInsertRowid);
+    const appointment = await db.prepare('SELECT * FROM appointments WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ appointment });
   } catch (error) {
     logger.error('Create appointment error:', error);
@@ -53,7 +57,7 @@ router.post('/', (req, res) => {
 });
 
 // Update appointment
-router.put('/:appointmentId', (req, res) => {
+router.put('/:appointmentId', async (req, res) => {
   try {
     const {
       title, type, providerName, location, appointmentDate,
@@ -61,7 +65,7 @@ router.put('/:appointmentId', (req, res) => {
     } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE appointments SET
         title = COALESCE(?, title),
         type = COALESCE(?, type),
@@ -82,7 +86,7 @@ router.put('/:appointmentId', (req, res) => {
       req.params.appointmentId
     );
 
-    const appointment = db.prepare('SELECT * FROM appointments WHERE id = ?').get(req.params.appointmentId);
+    const appointment = await db.prepare('SELECT * FROM appointments WHERE id = ?').get(req.params.appointmentId);
     if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
     res.json({ appointment });
   } catch (error) {
@@ -92,10 +96,10 @@ router.put('/:appointmentId', (req, res) => {
 });
 
 // Delete appointment
-router.delete('/:appointmentId', (req, res) => {
+router.delete('/:appointmentId', async (req, res) => {
   try {
     const db = getDb();
-    const info = db.prepare('DELETE FROM appointments WHERE id = ?').run(req.params.appointmentId);
+    const info = await db.prepare('DELETE FROM appointments WHERE id = ?').run(req.params.appointmentId);
     if (info.changes === 0) return res.status(404).json({ error: 'Appointment not found' });
     res.json({ message: 'Appointment deleted successfully' });
   } catch (error) {

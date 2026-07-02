@@ -7,10 +7,10 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get all medications for patient
-router.get('/:patientId', (req, res) => {
+router.get('/:patientId', async (req, res) => {
   try {
     const db = getDb();
-    const medications = db.prepare(`
+    const medications = await db.prepare(`
       SELECT * FROM medications WHERE patient_id = ? AND is_active = 1 ORDER BY name ASC
     `).all(req.params.patientId);
     res.json({ medications });
@@ -21,7 +21,7 @@ router.get('/:patientId', (req, res) => {
 });
 
 // Create medication
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       patientId, name, dosage, frequency, instructions,
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
     } = req.body;
 
     const db = getDb();
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO medications (
         patient_id, name, dosage, frequency, instructions,
         start_date, end_date, pharmacy_name, pharmacy_phone
@@ -39,7 +39,7 @@ router.post('/', (req, res) => {
       startDate ?? null, endDate ?? null, pharmacyName ?? null, pharmacyPhone ?? null
     );
 
-    const medication = db.prepare('SELECT * FROM medications WHERE id = ?').get(result.lastInsertRowid);
+    const medication = await db.prepare('SELECT * FROM medications WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ medication });
   } catch (error) {
     logger.error('Create medication error:', error);
@@ -48,12 +48,12 @@ router.post('/', (req, res) => {
 });
 
 // Update medication
-router.put('/:medicationId', (req, res) => {
+router.put('/:medicationId', async (req, res) => {
   try {
     const { name, dosage, frequency, instructions, endDate, pharmacyName, pharmacyPhone, isActive } = req.body;
 
     const db = getDb();
-    db.prepare(`
+    await db.prepare(`
       UPDATE medications SET
         name = COALESCE(?, name),
         dosage = COALESCE(?, dosage),
@@ -72,7 +72,7 @@ router.put('/:medicationId', (req, res) => {
       req.params.medicationId
     );
 
-    const medication = db.prepare('SELECT * FROM medications WHERE id = ?').get(req.params.medicationId);
+    const medication = await db.prepare('SELECT * FROM medications WHERE id = ?').get(req.params.medicationId);
     if (!medication) return res.status(404).json({ error: 'Medication not found' });
     res.json({ medication });
   } catch (error) {
@@ -82,17 +82,17 @@ router.put('/:medicationId', (req, res) => {
 });
 
 // Log medication taken
-router.post('/:medicationId/log', (req, res) => {
+router.post('/:medicationId/log', async (req, res) => {
   try {
     const { scheduledTime, takenTime, status, notes } = req.body;
 
     const db = getDb();
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO medication_logs (medication_id, scheduled_time, taken_time, status, notes)
       VALUES (?, ?, ?, ?, ?)
     `).run(req.params.medicationId, scheduledTime, takenTime ?? null, status ?? 'taken', notes ?? null);
 
-    const log = db.prepare('SELECT * FROM medication_logs WHERE id = ?').get(result.lastInsertRowid);
+    const log = await db.prepare('SELECT * FROM medication_logs WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ log });
   } catch (error) {
     logger.error('Log medication error:', error);

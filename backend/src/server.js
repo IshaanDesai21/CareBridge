@@ -28,8 +28,11 @@ const wss = new WebSocketServer({ server });
 
 // Middleware
 app.use(helmet());
+// CORS_ORIGIN accepts a comma-separated list so both the production
+// dashboard domain and local dev servers can be allowed at once.
+const corsOrigins = (process.env.CORS_ORIGIN || '*').split(',').map((o) => o.trim());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: corsOrigins.includes('*') ? '*' : corsOrigins,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -120,10 +123,10 @@ process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled promise rejection:', reason);
 });
 
-function startServer() {
+async function startServer() {
   try {
-    connectDatabase();
-    seedDemoData();
+    await connectDatabase();
+    await seedDemoData();
     server.on('error', (error) => {
       if (error.code === 'EADDRINUSE') {
         logger.error(`Port ${PORT} is already in use. Stop the existing server and retry.`);
@@ -135,7 +138,7 @@ function startServer() {
     server.listen(PORT, '0.0.0.0', () => {
       logger.info(`CareBridge API running on http://0.0.0.0:${PORT}`);
       logger.info(`Health check: http://localhost:${PORT}/health`);
-      logger.info(`Database: SQLite (carebridge.db)`);
+      logger.info(`Database: Postgres`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       const nets = os.networkInterfaces();
       for (const name of Object.keys(nets)) {

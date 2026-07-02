@@ -7,29 +7,30 @@ function generateCode() {
   return randomBytes(3).toString('hex').toUpperCase();
 }
 
-export function seedDemoData() {
+export async function seedDemoData() {
   const db = getDb();
 
-  if (db.prepare("SELECT id FROM users WHERE email = 'alice@carebridge.demo'").get()) return;
+  if (await db.prepare("SELECT id FROM users WHERE email = 'alice@carebridge.demo'").get()) return;
 
   logger.info('Seeding demo data…');
   const hash = bcrypt.hashSync('demo1234', 10);
 
   // ── Caregivers ────────────────────────────────────────────────────────────
-  const cgInsert = (email, first, last) => {
-    const ex = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const cgInsert = async (email, first, last) => {
+    const ex = await db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (ex) {
-      db.prepare('UPDATE users SET first_name = ?, last_name = ? WHERE id = ?').run(first, last, ex.id);
+      await db.prepare('UPDATE users SET first_name = ?, last_name = ? WHERE id = ?').run(first, last, ex.id);
       return ex.id;
     }
-    return db.prepare(
+    const inserted = await db.prepare(
       "INSERT INTO users (email, password_hash, role, first_name, last_name) VALUES (?, ?, 'caregiver', ?, ?)"
-    ).run(email, hash, first, last).lastInsertRowid;
+    ).run(email, hash, first, last);
+    return inserted.lastInsertRowid;
   };
 
-  const caregiverId  = cgInsert('caregiver@demo.com', 'Sarah', 'Mitchell');
-  const cg2Id        = cgInsert('james@carebridge.demo', 'James', 'Rivera');
-  const cg3Id        = cgInsert('priya@carebridge.demo', 'Priya', 'Nair');
+  const caregiverId  = await cgInsert('caregiver@demo.com', 'Sarah', 'Mitchell');
+  const cg2Id        = await cgInsert('james@carebridge.demo', 'James', 'Rivera');
+  const cg3Id        = await cgInsert('priya@carebridge.demo', 'Priya', 'Nair');
 
   const demoPatients = [
     {
@@ -301,20 +302,20 @@ export function seedDemoData() {
   const cgMap = { cg1: caregiverId, cg2: cg2Id, cg3: cg3Id };
 
   for (const p of demoPatients) {
-    const ur = db.prepare(
+    const ur = await db.prepare(
       "INSERT OR IGNORE INTO users (email, password_hash, role, first_name, last_name) VALUES (?, ?, 'patient', ?, ?)"
     ).run(p.email, hash, p.firstName, p.lastName);
 
     let userId = ur.lastInsertRowid;
     if (!userId) {
-      const u = db.prepare('SELECT id FROM users WHERE email = ?').get(p.email);
+      const u = await db.prepare('SELECT id FROM users WHERE email = ?').get(p.email);
       userId = u?.id;
       if (!userId) continue;
     }
 
-    if (db.prepare('SELECT id FROM patients WHERE user_id = ?').get(userId)) continue;
+    if (await db.prepare('SELECT id FROM patients WHERE user_id = ?').get(userId)) continue;
 
-    const pr = db.prepare(`
+    const pr = await db.prepare(`
       INSERT INTO patients
         (user_id, date_of_birth, diagnoses, allergies, wellness_score,
          gender, height_cm, weight_kg, hearing_notes, vision_score,
@@ -335,11 +336,11 @@ export function seedDemoData() {
 
     // Join code
     let code;
-    do { code = generateCode(); } while (db.prepare('SELECT id FROM join_codes WHERE code = ?').get(code));
-    db.prepare('INSERT INTO join_codes (code, patient_id) VALUES (?, ?)').run(code, patientId);
+    do { code = generateCode(); } while (await db.prepare('SELECT id FROM join_codes WHERE code = ?').get(code));
+    await db.prepare('INSERT INTO join_codes (code, patient_id) VALUES (?, ?)').run(code, patientId);
 
     for (const med of p.meds) {
-      db.prepare('INSERT INTO medications (patient_id, name, dosage, frequency, instructions, is_active) VALUES (?, ?, ?, ?, ?, 1)')
+      await db.prepare('INSERT INTO medications (patient_id, name, dosage, frequency, instructions, is_active) VALUES (?, ?, ?, ?, ?, 1)')
         .run(patientId, med.name, med.dosage, med.frequency, med.instructions);
     }
 
@@ -349,7 +350,7 @@ export function seedDemoData() {
       const d = new Date(baseDate);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO wellness_checkins
           (patient_id, date, energy, mood, pain, fatigue, appetite, hydration, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -357,26 +358,27 @@ export function seedDemoData() {
     }
 
     for (const n of p.notes) {
-      db.prepare('INSERT INTO care_notes (patient_id, caregiver_id, note_type, content) VALUES (?, ?, ?, ?)')
+      await db.prepare('INSERT INTO care_notes (patient_id, caregiver_id, note_type, content) VALUES (?, ?, ?, ?)')
         .run(patientId, cgMap[n.cg], n.type, n.content);
     }
   }
 
   // ── Link demo family to Alice ─────────────────────────────────────────────
-  const aliceUser    = db.prepare("SELECT id FROM users WHERE email = 'alice@carebridge.demo'").get();
-  const alicePatient = aliceUser ? db.prepare('SELECT id FROM patients WHERE user_id = ?').get(aliceUser.id) : null;
+  const aliceUser    = await db.prepare("SELECT id FROM users WHERE email = 'alice@carebridge.demo'").get();
+  const alicePatient = aliceUser ? await db.prepare('SELECT id FROM patients WHERE user_id = ?').get(aliceUser.id) : null;
 
   if (alicePatient) {
     let familyId;
-    const ef = db.prepare("SELECT id FROM users WHERE email = 'family@demo.com'").get();
+    const ef = await db.prepare("SELECT id FROM users WHERE email = 'family@demo.com'").get();
     if (ef) {
       familyId = ef.id;
     } else {
-      familyId = db.prepare(
+      const inserted = await db.prepare(
         "INSERT INTO users (email, password_hash, role, first_name, last_name) VALUES (?, ?, 'family', 'Demo', 'Family')"
-      ).run('family@demo.com', hash).lastInsertRowid;
+      ).run('family@demo.com', hash);
+      familyId = inserted.lastInsertRowid;
     }
-    db.prepare('INSERT OR IGNORE INTO family_patient_links (family_user_id, patient_id) VALUES (?, ?)').run(familyId, alicePatient.id);
+    await db.prepare('INSERT OR IGNORE INTO family_patient_links (family_user_id, patient_id) VALUES (?, ?)').run(familyId, alicePatient.id);
   }
 
   logger.info('✅ Demo data seeded — 6 patients, 3 caregivers, 1 linked family');

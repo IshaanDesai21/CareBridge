@@ -32,7 +32,9 @@ class APIService {
     static var isDemoMode = false
     static var demoUserRole = "patient"
 
-    static let defaultServerURL = "http://192.168.87.196:3000"
+    // Update this once the Render service is live — see render.yaml / DEPLOYMENT.md
+    // for the exact hostname (e.g. https://api.carebridge.ftcblueprint.com).
+    static let defaultServerURL = "https://api.carebridge.ftcblueprint.com"
     static let serverURLKey = "carebridge_server_url"
 
     private var baseURL: String {
@@ -83,6 +85,23 @@ class APIService {
         return (response.user, response.token)
     }
     
+    func loginWithGoogle(idToken: String, role: String) async throws -> (user: User, token: String) {
+        if APIService.isDemoMode {
+            return (APIService.demoUser(for: role), "demo-token")
+        }
+        struct GoogleRequest: Codable {
+            let idToken: String
+            let role: String
+        }
+        struct GoogleResponse: Codable {
+            let user: User
+            let token: String
+        }
+        let request = GoogleRequest(idToken: idToken, role: role)
+        let response: GoogleResponse = try await post(endpoint: "/auth/google", body: request)
+        return (response.user, response.token)
+    }
+
     func getCurrentUser(token: String) async throws -> User {
         if APIService.isDemoMode {
             return APIService.demoUser(for: APIService.demoUserRole)
