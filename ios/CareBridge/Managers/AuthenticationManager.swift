@@ -12,8 +12,15 @@ class AuthenticationManager: ObservableObject {
         if let savedToken = UserDefaults.standard.string(forKey: "authToken") {
             self.token = savedToken
             self.isAuthenticated = true
-            Task {
-                await loadCurrentUser()
+            if savedToken == "demo-token" {
+                let role = UserDefaults.standard.string(forKey: "demoUserRole") ?? "patient"
+                APIService.isDemoMode = true
+                APIService.demoUserRole = role
+                self.currentUser = APIService.demoUser(for: role)
+            } else {
+                Task {
+                    await loadCurrentUser()
+                }
             }
         }
     }
@@ -38,11 +45,24 @@ class AuthenticationManager: ObservableObject {
         UserDefaults.standard.set(response.token, forKey: "authToken")
     }
 
+    func loginAsDemo(role: String) {
+        APIService.isDemoMode = true
+        APIService.demoUserRole = role
+        let user = APIService.demoUser(for: role)
+        self.token = "demo-token"
+        self.currentUser = user
+        self.isAuthenticated = true
+        UserDefaults.standard.set("demo-token", forKey: "authToken")
+        UserDefaults.standard.set(role, forKey: "demoUserRole")
+    }
+
     func logout() {
         token = nil
         currentUser = nil
         isAuthenticated = false
+        APIService.isDemoMode = false
         UserDefaults.standard.removeObject(forKey: "authToken")
+        UserDefaults.standard.removeObject(forKey: "demoUserRole")
     }
 
     private func loadCurrentUser() async {
