@@ -9,7 +9,7 @@ on:
     branches: [main]
 
 jobs:
-  build-check:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
           npm ci
 
   deploy:
-    needs: build-check
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy — API
