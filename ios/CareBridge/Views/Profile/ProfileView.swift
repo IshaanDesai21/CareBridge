@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 // MARK: - Profile View
 
@@ -37,37 +38,41 @@ struct ProfileView: View {
                     .padding(.vertical, 8)
                 }
 
-                // Health Information
-                Section("Health Information") {
-                    if let pid = patientId {
-                        Button {
-                            showEditPhysical = true
-                        } label: {
-                            HStack {
-                                Label("Physical Details", systemImage: "scalemass.fill")
-                                Spacer()
-                                if let h = details?.heightCm {
-                                    Text(String(format: "%.0f cm", h))
-                                        .font(.caption).foregroundStyle(.secondary)
+                // Health Information — only meaningful for the patient's own profile.
+                // Caregivers view a patient's physical details from that patient's
+                // record (PatientDetailCaregiverView), not from their own profile.
+                if isPatientRole {
+                    Section("Health Information") {
+                        if let pid = patientId {
+                            Button {
+                                showEditPhysical = true
+                            } label: {
+                                HStack {
+                                    Label("Physical Details", systemImage: "scalemass.fill")
+                                    Spacer()
+                                    if let h = details?.heightCm {
+                                        Text(String(format: "%.0f cm", h))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2).foregroundStyle(.tertiary)
                                 }
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2).foregroundStyle(.tertiary)
+                            }
+                            .foregroundStyle(.primary)
+                            .sheet(isPresented: $showEditPhysical, onDismiss: { Task { await loadDetails() } }) {
+                                EditPhysicalDetailsView(patientId: pid, existing: details)
+                                    .environmentObject(authManager)
                             }
                         }
-                        .foregroundStyle(.primary)
-                        .sheet(isPresented: $showEditPhysical, onDismiss: { Task { await loadDetails() } }) {
-                            EditPhysicalDetailsView(patientId: pid, existing: details)
-                                .environmentObject(authManager)
+                        NavigationLink(destination: MedicalHistoryView(details: details)) {
+                            Label("Medical History", systemImage: "doc.text.fill")
                         }
-                    }
-                    NavigationLink(destination: MedicalHistoryView(details: details)) {
-                        Label("Medical History", systemImage: "doc.text.fill")
-                    }
-                    NavigationLink(destination: EmergencyContactsView(contacts: details?.emergencyContacts ?? [])) {
-                        Label("Emergency Contacts", systemImage: "phone.fill")
-                    }
-                    NavigationLink(destination: CareTeamView(members: details?.careTeam ?? [])) {
-                        Label("Care Team", systemImage: "person.2.fill")
+                        NavigationLink(destination: EmergencyContactsView(contacts: details?.emergencyContacts ?? [])) {
+                            Label("Emergency Contacts", systemImage: "phone.fill")
+                        }
+                        NavigationLink(destination: CareTeamView(members: details?.careTeam ?? [])) {
+                            Label("Care Team", systemImage: "person.2.fill")
+                        }
                     }
                 }
 
@@ -98,6 +103,10 @@ struct ProfileView: View {
         }
     }
 
+    private var isPatientRole: Bool {
+        authManager.currentUser?.role == "patient" || authManager.currentUser?.role == nil
+    }
+
     private var initials: String {
         let f = authManager.currentUser?.firstName?.first.map(String.init) ?? ""
         let l = authManager.currentUser?.lastName?.first.map(String.init) ?? ""
@@ -105,7 +114,9 @@ struct ProfileView: View {
     }
 
     private func loadDetails() async {
-        guard let token = authManager.token else { isLoading = false; return }
+        // Caregivers, family, and organization accounts don't have a patient
+        // record of their own — nothing to load for them.
+        guard isPatientRole, let token = authManager.token else { isLoading = false; return }
         do {
             let pid = try await APIService.shared.getMyPatient(token: token)
             patientId = pid
@@ -323,9 +334,14 @@ struct AccessibilitySettingsView: View {
     var body: some View {
         List {
             Section {
-                Text("These settings help make the CareBridge app easier to use. Changes take effect immediately.")
+                Text("These settings help make the CareBridge app easier to use. Changes take effect immediately across the whole app.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                Text("Preview")
+                    .font(.body)
+                    .fontWeight(boldText ? .bold : .regular)
+                    .dynamicTypeSize(largeText ? DynamicTypeSize.accessibility2 : DynamicTypeSize.medium)
+                    .contrast(highContrast ? 1.18 : 1.0)
             }
 
             Section("Visual") {
@@ -346,6 +362,9 @@ struct AccessibilitySettingsView: View {
                 }
                 Toggle(isOn: $haptics) {
                     Label("Haptic Feedback", systemImage: "hand.tap.fill")
+                }
+                .onChange(of: haptics) { _, enabled in
+                    if enabled { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
                 }
             }
 
@@ -376,43 +395,64 @@ struct AccessibilitySettingsView: View {
 // MARK: - Notifications Settings
 
 struct NotificationsSettingsView: View {
+    @EnvironmentObject var authManager: AuthenticationManager
     @AppStorage("notif_caregiverCalls") private var caregiverCallNotifs = true
     @AppStorage("notif_checkinReminder") private var checkinReminder = true
     @AppStorage("notif_medicationReminder") private var medicationReminder = true
     @AppStorage("notif_checkinTime") private var checkinTime = 9 // 9 AM
 
+    @State private var permissionGranted = false
+    @State private var medications: [Medication] = []
+
     private let hours = Array(6...22)
+    private var isPatient: Bool { authManager.currentUser?.role != "caregiver" && authManager.currentUser?.role != "organization" }
 
     var body: some View {
         List {
-            Section {
-                Text("Notification preferences are saved on this device.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            if !permissionGranted {
+                Section {
+                    Button {
+                        NotificationsManager.shared.requestAuthorization { granted in
+                            permissionGranted = granted
+                            if granted { resyncAll() }
+                        }
+                    } label: {
+                        Label("Enable Notifications", systemImage: "bell.badge")
+                    }
+                    Text("Notifications aren't enabled yet. Tap to allow CareBridge to send reminders and alerts.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
             }
 
             Section("Alerts") {
                 Toggle(isOn: $caregiverCallNotifs) {
-                    Label("Caregiver Response Alerts", systemImage: "bell.badge.fill")
+                    Label(isPatient ? "Caregiver Response Alerts" : "Patient Call Alerts", systemImage: "bell.badge.fill")
                 }
-                Text("Get notified when your caregiver responds to your call request.")
+                Text(isPatient ? "Get notified when your caregiver responds to your call request."
+                                : "Get notified instantly when a patient calls for help.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 
-            Section("Reminders") {
-                Toggle(isOn: $checkinReminder) {
-                    Label("Daily Check-In Reminder", systemImage: "heart.text.square.fill")
-                }
-                if checkinReminder {
-                    Picker("Reminder Time", selection: $checkinTime) {
-                        ForEach(hours, id: \.self) { hour in
-                            Text(formatHour(hour)).tag(hour)
-                        }
+            if isPatient {
+                Section("Reminders") {
+                    Toggle(isOn: $checkinReminder) {
+                        Label("Daily Check-In Reminder", systemImage: "heart.text.square.fill")
                     }
-                }
+                    .onChange(of: checkinReminder) { _, _ in resyncAll() }
 
-                Toggle(isOn: $medicationReminder) {
-                    Label("Medication Reminders", systemImage: "pills.fill")
+                    if checkinReminder {
+                        Picker("Reminder Time", selection: $checkinTime) {
+                            ForEach(hours, id: \.self) { hour in
+                                Text(formatHour(hour)).tag(hour)
+                            }
+                        }
+                        .onChange(of: checkinTime) { _, _ in resyncAll() }
+                    }
+
+                    Toggle(isOn: $medicationReminder) {
+                        Label("Medication Reminders", systemImage: "pills.fill")
+                    }
+                    .onChange(of: medicationReminder) { _, _ in resyncAll() }
                 }
             }
 
@@ -428,12 +468,33 @@ struct NotificationsSettingsView: View {
         }
         .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.large)
+        .task { await checkPermissionAndLoad() }
     }
 
     private func formatHour(_ h: Int) -> String {
         let ampm = h < 12 ? "AM" : "PM"
         let display = h == 0 ? 12 : (h > 12 ? h - 12 : h)
         return "\(display):00 \(ampm)"
+    }
+
+    @MainActor
+    private func checkPermissionAndLoad() async {
+        permissionGranted = await withCheckedContinuation { continuation in
+            UNUserNotificationCenter.current().getNotificationSettings { settings in
+                continuation.resume(returning: settings.authorizationStatus == .authorized)
+            }
+        }
+        guard isPatient, let token = authManager.token else { return }
+        if let pid = try? await APIService.shared.getMyPatient(token: token) {
+            medications = (try? await APIService.shared.getMedications(patientId: pid, token: token)) ?? []
+        }
+        if permissionGranted { resyncAll() }
+    }
+
+    private func resyncAll() {
+        guard permissionGranted, isPatient else { return }
+        NotificationsManager.shared.syncCheckinReminder(enabled: checkinReminder, hour: checkinTime)
+        NotificationsManager.shared.syncMedicationReminders(enabled: medicationReminder, medications: medications)
     }
 }
 

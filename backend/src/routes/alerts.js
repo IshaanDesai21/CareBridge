@@ -1,6 +1,7 @@
 import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
+import { sendToUser } from '../utils/ws.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -34,7 +35,10 @@ router.post('/', (req, res) => {
       `INSERT INTO notifications (user_id, title, body, type) VALUES (?, ?, ?, ?)`
     );
     for (const cg of caregivers) {
-      insertNotif.run(cg.id, notifTitle, notifBody, isUrgent ? 'urgent' : 'alert');
+      const notifResult = insertNotif.run(cg.id, notifTitle, notifBody, isUrgent ? 'urgent' : 'alert');
+      const notification = db.prepare('SELECT * FROM notifications WHERE id = ?').get(notifResult.lastInsertRowid);
+      // Deliver instantly to any caregiver device with an open WebSocket connection
+      sendToUser(cg.id, { type: 'notification', notification });
     }
 
     const alert = db.prepare(`

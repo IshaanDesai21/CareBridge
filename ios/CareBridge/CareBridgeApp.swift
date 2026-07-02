@@ -107,6 +107,7 @@ struct HIPAAConsentView: View {
 @main
 struct CareBridgeApp: App {
     @StateObject private var authManager = AuthenticationManager()
+    @StateObject private var accessibility = AccessibilityManager.shared
     @AppStorage("hipaa_accepted") private var hipaaAccepted = false
 
     init() {
@@ -115,6 +116,7 @@ struct CareBridgeApp: App {
         UICollectionView.appearance().backgroundColor = bgUIColor
         UITabBar.appearance().backgroundColor = bgUIColor
         UITabBar.appearance().isTranslucent = true
+        NotificationsManager.shared.requestAuthorizationIfNeeded()
     }
 
     var body: some Scene {
@@ -123,16 +125,26 @@ struct CareBridgeApp: App {
                 if hipaaAccepted {
                     MainTabView()
                         .environmentObject(authManager)
+                        .environmentObject(accessibility)
                         .preferredColorScheme(.light)
+                        .accessibleRoot()
+                        .onAppear { LiveNotificationsManager.shared.connect(authManager: authManager) }
+                        .onChange(of: authManager.isAuthenticated) { _, isAuthed in
+                            if !isAuthed { LiveNotificationsManager.shared.disconnect() }
+                        }
                 } else {
                     HIPAAConsentView(onAccept: { hipaaAccepted = true })
                         .environmentObject(authManager)
+                        .environmentObject(accessibility)
                         .preferredColorScheme(.light)
+                        .accessibleRoot()
                 }
             } else {
                 LoginView()
                     .environmentObject(authManager)
+                    .environmentObject(accessibility)
                     .preferredColorScheme(.light)
+                    .accessibleRoot()
             }
         }
     }

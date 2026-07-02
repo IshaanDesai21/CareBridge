@@ -6,8 +6,8 @@ import logger from '../utils/logger.js';
 const router = express.Router();
 router.use(authenticateToken);
 
-const NVIDIA_KEY = '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';
-const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1';
+const NVIDIA_KEY = process.env.NVIDIA_API_KEY;
+const NVIDIA_URL = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
 
 // Model for companion chat — fast conversational responses
 const CHAT_MODEL = 'deepseek-ai/deepseek-v4-flash';
@@ -143,11 +143,33 @@ router.get('/insights/:patientId', (req, res) => {
   }
 });
 
+// ─── Chat history ──────────────────────────────────────────────────────────────
+// GET /api/ai/chat/history — the last N turns for the current user, oldest first
+router.get('/chat/history', (req, res) => {
+  try {
+    const db = getDb();
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+    const rows = db.prepare(`
+      SELECT id, role, content, created_at FROM chat_messages
+      WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
+    `).all(req.user.id, limit);
+    res.json({ messages: rows.reverse() });
+  } catch (error) {
+    logger.error('Get chat history error:', error);
+    res.status(500).json({ error: 'Failed to retrieve chat history' });
+  }
+});
+
 // ─── AI companion chat ────────────────────────────────────────────────────────
 router.post('/chat', async (req, res) => {
   try {
     const { message, patientGender } = req.body;
     const db = getDb();
+
+    if (message) {
+      db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'user', ?)`)
+        .run(req.user.id, message);
+    }
 
     // Pull companion info from patient record
     const patientRecord = db.prepare(`
@@ -189,8 +211,15 @@ Rules:
 
     let reply;
     if (NVIDIA_KEY && message) {
-      // Pass a short history for context (last 10 turns), system prompt injected by callAI
-      const history = Array.isArray(req.body.history) ? req.body.history.slice(-10) : [];
+      // Prefer the server's own memory of this conversation (chat_messages) over
+      // whatever the client sends, so the companion remembers across app launches.
+      // Exclude the user turn we just inserted — it's appended explicitly below.
+      const storedHistory = db.prepare(`
+        SELECT role, content FROM chat_messages
+        WHERE user_id = ? ORDER BY created_at DESC LIMIT 21
+      `).all(req.user.id).reverse();
+      // The user turn we just inserted is the last row — drop it, it's re-added explicitly below
+      const history = storedHistory.slice(0, -1);
       const userTurn = { role: 'user', content: message };
       reply = await callAI(systemPrompt, [...history, userTurn], 512, CHAT_MODEL);
     } else {
@@ -205,10 +234,79 @@ Rules:
       ];
       reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
+
+    db.prepare(`INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'assistant', ?)`)
+      .run(req.user.id, reply);
+
     res.json({ message: reply, companionName, timestamp: new Date().toISOString() });
   } catch (error) {
     logger.error('AI chat error:', error.message);
     res.status(500).json({ error: 'Failed to process chat message' });
+  }
+});
+
+// ─── Medication label parsing (scan-to-add) ────────────────────────────────────
+// Takes raw OCR text lifted off a medication label/bottle by the on-device
+// scanner and asks the model to extract structured fields. Returns null for
+// name if the text doesn't look like a medication label at all.
+router.post('/parse-medication', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'No scanned text provided' });
+    }
+
+    const fallbackParse = () => {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      return { name: lines[0] || null, dosage: null, frequency: null, instructions: null, confidence: 'low' };
+    };
+
+    if (!NVIDIA_KEY) {
+      return res.json({ medication: fallbackParse() });
+    }
+
+    const systemPrompt = `You are a pharmacy label parser. You are given raw, possibly noisy OCR text lifted from a
+prescription medication bottle or box label. Extract structured fields. Respond with ONLY a single JSON object,
+no markdown fences, no commentary, matching exactly this shape:
+{"name": string|null, "dosage": string|null, "frequency": string|null, "instructions": string|null, "isMedication": boolean}
+
+Rules:
+- "name": the drug name, capitalized normally (e.g. "Lisinopril"). Strip dosage/manufacturer noise.
+- "dosage": strength like "10mg" or "500 mg". Null if not present.
+- "frequency": how often it's taken, in plain English (e.g. "Once daily", "Twice a day with food"). Null if not present.
+- "instructions": any other directions on the label (e.g. "Take with food", "Do not drink alcohol"). Null if none.
+- "isMedication": false if this text clearly isn't a medication label (e.g. random object, no drug name found).
+- Never invent information that isn't implied by the text.`;
+
+    // gpt-oss-20b reasons before answering and can burn the whole token budget on
+    // reasoning alone for a JSON-extraction task like this — give it enough headroom.
+    const raw = await callAI(systemPrompt, `OCR text:\n${text}`, 900, SUMMARY_MODEL);
+
+    let parsed;
+    try {
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      logger.error('parse-medication: model did not return valid JSON:', raw);
+      return res.json({ medication: fallbackParse() });
+    }
+
+    if (!parsed.isMedication || !parsed.name) {
+      return res.json({ medication: { name: null, dosage: null, frequency: null, instructions: null, confidence: 'none' } });
+    }
+
+    res.json({
+      medication: {
+        name: parsed.name,
+        dosage: parsed.dosage ?? null,
+        frequency: parsed.frequency ?? null,
+        instructions: parsed.instructions ?? null,
+        confidence: 'high'
+      }
+    });
+  } catch (error) {
+    logger.error('Parse medication error:', error.message);
+    res.status(500).json({ error: 'Failed to parse medication label' });
   }
 });
 

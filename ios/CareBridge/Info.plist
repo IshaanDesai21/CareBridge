@@ -33,6 +33,12 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>CareBridge uses the camera to scan medication labels so details can be filled in automatically.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CareBridge uses the microphone so you can talk to your AI companion using your voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CareBridge uses speech recognition to turn what you say into text for your AI companion chat.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
