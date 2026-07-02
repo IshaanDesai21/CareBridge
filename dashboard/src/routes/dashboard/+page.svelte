@@ -5,15 +5,15 @@
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 
 	// ─── Demo mode toggle ─────────────────────
-	// Set to false and uncomment the API imports below to connect to a live backend
-	const DEMO_MODE = true;
+	// Live backend mode: data persists to the API/database.
+	const DEMO_MODE = false;
 
-	// import {
-	// 	getPatients, submitWellnessCheckin, getWellnessHistory, getCareNotes,
-	// 	createCareNote, getMedications, createMedication, getAiInsights,
-	// 	getLinkedPatient, familyLink, getPatientJoinCode, getPatientDetails,
-	// 	getAiOverview, getAlerts, acknowledgeAlert
-	// } from '$lib/api';
+	import {
+		getPatients, submitWellnessCheckin, getWellnessHistory, getCareNotes,
+		createCareNote, getMedications, createMedication, getAiInsights,
+		getLinkedPatient, familyLink, getPatientJoinCode, getPatientDetails,
+		getAiOverview, getAlerts, acknowledgeAlert
+	} from '$lib/api';
 
 	// ─── Static demo data ────────────────────────────────────────────────────
 	const DEMO_USER = { id: 1, firstName: 'Sarah', lastName: 'Mitchell', email: 'sarah@carebridge.com', role: 'caregiver' };
@@ -167,7 +167,6 @@
 			loading = false;
 			return;
 		}
-		// Live backend path — uncomment DEMO_MODE = false and API imports above to use
 		const unsub = auth.subscribe(async state => {
 			if (!state.isAuthenticated) { goto('/login'); return; }
 			user = state.user;
@@ -183,23 +182,28 @@
 
 	// ─── Data loading ─────────────────────────────────────────────────────────
 	async function loadCaregiverData() {
-		// Live backend only — not called in DEMO_MODE
-		// try {
-		// 	const [pResult, aResult] = await Promise.allSettled([getPatients(), getAlerts()]);
-		// 	patients = ((pResult.value?.patients) || []).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
-		// 	alerts = aResult.value?.alerts || [];
-		// } catch (e) {
-		// 	addNotification('Failed to load patients. Is the backend running?', 'error');
-		// }
+		try {
+			const [pResult, aResult] = await Promise.allSettled([getPatients(), getAlerts()]);
+			patients = ((pResult.value?.patients) || []).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
+			alerts = aResult.value?.alerts || [];
+		} catch (e) {
+			addNotification('Failed to load patients. Is the backend running?', 'error');
+		}
 	}
 
 	async function loadFamilyData() {
-		// Live backend only
-		// try {
-		// 	const result = await getLinkedPatient();
-		// 	familyLinked = result.linked; linkedPatient = result.patient;
-		// 	if (linkedPatient) { ... }
-		// } catch (e) { console.error('Family data error:', e); }
+		try {
+			const result = await getLinkedPatient();
+			familyLinked = result.linked; linkedPatient = result.patient;
+			if (linkedPatient) {
+				const [w, m, n] = await Promise.allSettled([
+					getWellnessHistory(linkedPatient.id), getMedications(linkedPatient.id), getCareNotes(linkedPatient.id)
+				]);
+				familyWellness = w.value?.checkins || w.value?.history || [];
+				familyMeds = m.value?.medications || m.value || [];
+				familyNotes = n.value?.notes || n.value || [];
+			}
+		} catch (e) { console.error('Family data error:', e); }
 	}
 
 	async function selectPatient(patient) {
@@ -218,19 +222,18 @@
 			caregiverMeds = DEMO_MEDS[patient.id] || [];
 			return;
 		}
-		// Live backend:
-		// try {
-		// 	const [hist, notes, insights, code, details, meds] = await Promise.allSettled([
-		// 		getWellnessHistory(patient.id), getCareNotes(patient.id), getAiInsights(patient.id),
-		// 		getPatientJoinCode(patient.id), getPatientDetails(patient.id), getMedications(patient.id)
-		// 	]);
-		// 	wellnessHistory = hist.value?.checkins || hist.value?.history || [];
-		// 	careNotes = notes.value?.notes || notes.value || [];
-		// 	aiInsights = insights.value?.insights || insights.value || [];
-		// 	patientJoinCode = code.value?.code || null;
-		// 	patientDetails = details.value?.details || null;
-		// 	caregiverMeds = meds.value?.medications || meds.value || [];
-		// } catch (e) { console.error(e); }
+		try {
+			const [hist, notes, insights, code, details, meds] = await Promise.allSettled([
+				getWellnessHistory(patient.id), getCareNotes(patient.id), getAiInsights(patient.id),
+				getPatientJoinCode(patient.id), getPatientDetails(patient.id), getMedications(patient.id)
+			]);
+			wellnessHistory = hist.value?.checkins || hist.value?.history || [];
+			careNotes = notes.value?.notes || notes.value || [];
+			aiInsights = insights.value?.insights || insights.value || [];
+			patientJoinCode = code.value?.code || null;
+			patientDetails = details.value?.details || null;
+			caregiverMeds = meds.value?.medications || meds.value || [];
+		} catch (e) { console.error(e); }
 	}
 
 	// ─── Handlers ─────────────────────────────────────────────────────────────
@@ -249,8 +252,8 @@
 			addNotification('Alert acknowledged.', 'success');
 			return;
 		}
-		// try { await acknowledgeAlert(alertId); alerts = alerts.map(a => a.id === alertId ? { ...a, is_acknowledged: 1 } : a); }
-		// catch (e) { addNotification('Failed to acknowledge alert', 'error'); }
+		try { await acknowledgeAlert(alertId); alerts = alerts.map(a => a.id === alertId ? { ...a, is_acknowledged: 1 } : a); }
+		catch (e) { addNotification('Failed to acknowledge alert', 'error'); }
 	}
 
 	async function handleGenerateOverview() {
@@ -262,9 +265,9 @@
 			generatingOverview = false;
 			return;
 		}
-		// try { const result = await getAiOverview(selectedPatient.id); aiOverview = result.overview; }
-		// catch (e) { addNotification(e.message || 'Failed to generate overview', 'error'); }
-		// finally { generatingOverview = false; }
+		try { const result = await getAiOverview(selectedPatient.id); aiOverview = result.overview; }
+		catch (e) { addNotification(e.message || 'Failed to generate overview', 'error'); }
+		finally { generatingOverview = false; }
 	}
 
 	async function handleCheckin() {
@@ -285,14 +288,15 @@
 			submittingCheckin = false;
 			return;
 		}
-		// try {
-		// 	const result = await submitWellnessCheckin({ patientId: selectedPatient.id, ...checkin });
-		// 	selectedPatient = { ...selectedPatient, wellness_score: result.wellnessScore || selectedPatient.wellness_score };
-		// 	patients = patients.map(p => p.id === selectedPatient.id ? selectedPatient : p).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
-		// 	addNotification('Check-in submitted!', 'success');
-		// 	checkin = { energy: 5, mood: 5, pain: 5, fatigue: 5, appetite: 5, hydration: 5, notes: '' };
-		// 	activeTab = 'overview';
-		// } catch (e) { addNotification(e.message, 'error'); } finally { submittingCheckin = false; }
+		try {
+			const result = await submitWellnessCheckin({ patientId: selectedPatient.id, ...checkin });
+			selectedPatient = { ...selectedPatient, wellness_score: result.wellnessScore || selectedPatient.wellness_score };
+			patients = patients.map(p => p.id === selectedPatient.id ? selectedPatient : p).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
+			const h = await getWellnessHistory(selectedPatient.id); wellnessHistory = h?.checkins || h?.history || [];
+			addNotification('Check-in submitted!', 'success');
+			checkin = { energy: 5, mood: 5, pain: 5, fatigue: 5, appetite: 5, hydration: 5, notes: '' };
+			activeTab = 'overview';
+		} catch (e) { addNotification(e.message, 'error'); } finally { submittingCheckin = false; }
 	}
 
 	async function handleAddNote() {
@@ -306,13 +310,13 @@
 			submittingNote = false;
 			return;
 		}
-		// try {
-		// 	await createCareNote({ patientId: selectedPatient.id, ...newNote, caregiverId: user?.id });
-		// 	addNotification('Care note added.', 'success');
-		// 	newNote = { content: '', note_type: 'observation' };
-		// 	const n = await getCareNotes(selectedPatient.id);
-		// 	careNotes = n?.notes || n || [];
-		// } catch (e) { addNotification(e.message, 'error'); } finally { submittingNote = false; }
+		try {
+			await createCareNote({ patientId: selectedPatient.id, ...newNote, caregiverId: user?.id });
+			addNotification('Care note added.', 'success');
+			newNote = { content: '', note_type: 'observation' };
+			const n = await getCareNotes(selectedPatient.id);
+			careNotes = n?.notes || n || [];
+		} catch (e) { addNotification(e.message, 'error'); } finally { submittingNote = false; }
 	}
 
 	async function handleAddMedication() {
@@ -326,13 +330,13 @@
 			submittingMed = false;
 			return;
 		}
-		// try {
-		// 	await createMedication({ patientId: selectedPatient.id, ...newMed });
-		// 	addNotification('Medication added.', 'success');
-		// 	newMed = { name: '', dosage: '', frequency: '' };
-		// 	const m = await getMedications(selectedPatient.id);
-		// 	caregiverMeds = m?.medications || m || [];
-		// } catch (e) { addNotification(e.message, 'error'); } finally { submittingMed = false; }
+		try {
+			await createMedication({ patientId: selectedPatient.id, ...newMed });
+			addNotification('Medication added.', 'success');
+			newMed = { name: '', dosage: '', frequency: '' };
+			const m = await getMedications(selectedPatient.id);
+			caregiverMeds = m?.medications || m || [];
+		} catch (e) { addNotification(e.message, 'error'); } finally { submittingMed = false; }
 	}
 
 	async function handleFamilyLink() {
@@ -355,10 +359,10 @@
 			linkingCode = false;
 			return;
 		}
-		// try {
-		// 	const result = await familyLink(familyJoinCodeInput.trim().toUpperCase());
-		// 	if (result.patient) { linkedPatient = result.patient; familyLinked = true; await loadFamilyData(); addNotification(`Linked to ${result.patient.first_name}!`, 'success'); }
-		// } catch (e) { addNotification(e.message || 'Invalid join code', 'error'); } finally { linkingCode = false; }
+		try {
+			const result = await familyLink(familyJoinCodeInput.trim().toUpperCase());
+			if (result.patient) { linkedPatient = result.patient; familyLinked = true; await loadFamilyData(); addNotification(`Linked to ${result.patient.first_name}!`, 'success'); }
+		} catch (e) { addNotification(e.message || 'Invalid join code', 'error'); } finally { linkingCode = false; }
 	}
 
 	function handleLogout() {
@@ -408,20 +412,19 @@
 			savingPhysical = false;
 			return;
 		}
-		// Live backend:
-		// try {
-		// 	await fetch(`/api/patients/${selectedPatient.id}/details`, {
-		// 		method: 'PATCH',
-		// 		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${$auth.token}` },
-		// 		body: JSON.stringify({ gender: parsed.gender, heightCm: parsed.height_cm, weightKg: parsed.weight_kg,
-		// 			hearingNotes: parsed.hearing_notes, visionScore: parsed.vision_score, medicalHistory: parsed.medical_history,
-		// 			diagnoses: parsed.diagnoses, allergies: parsed.allergies, aiCompanionName: parsed.ai_companion_name })
-		// 	});
-		// 	patientDetails = { ...patientDetails, ...parsed };
-		// 	addNotification('Physical details saved.', 'success');
-		// 	editingPhysical = false;
-		// } catch (e) { addNotification('Failed to save details.', 'error'); }
-		// finally { savingPhysical = false; }
+		try {
+			await fetch(`/api/patients/${selectedPatient.id}/details`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${$auth.token}` },
+				body: JSON.stringify({ gender: parsed.gender, heightCm: parsed.height_cm, weightKg: parsed.weight_kg,
+					hearingNotes: parsed.hearing_notes, visionScore: parsed.vision_score, medicalHistory: parsed.medical_history,
+					diagnoses: parsed.diagnoses, allergies: parsed.allergies, aiCompanionName: parsed.ai_companion_name })
+			});
+			patientDetails = { ...patientDetails, ...parsed };
+			addNotification('Physical details saved.', 'success');
+			editingPhysical = false;
+		} catch (e) { addNotification('Failed to save details.', 'error'); }
+		finally { savingPhysical = false; }
 	}
 
 	function copyToClipboard(text) {
