@@ -272,3 +272,27 @@ struct AppNotification: Codable, Identifiable {
         case createdAt = "created_at"
     }
 }
+
+// MARK: - AI Chat History
+
+struct ChatHistoryMessage: Codable, Identifiable {
+    let id: Int
+    let role: String
+    let content: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, role, content
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Scanned Medication (OCR result)
+
+struct ScannedMedication: Codable {
+    let name: String?
+    let dosage: String?
+    let frequency: String?
+    let instructions: String?
+    let confidence: String
+}

@@ -8,6 +8,7 @@ import { WebSocketServer } from 'ws';
 import logger from './utils/logger.js';
 import { connectDatabase } from './database/db.js';
 import { seedDemoData } from './database/seed.js';
+import { authenticateSocket } from './utils/ws.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -69,8 +70,28 @@ wss.on('error', (error) => {
 
 wss.on('connection', (ws) => {
   logger.info('WebSocket client connected');
+  let authenticated = false;
+
   ws.on('error', (error) => logger.error('WebSocket client error:', error));
-  ws.on('message', (message) => logger.info(`WS message: ${message}`));
+
+  ws.on('message', (message) => {
+    if (authenticated) return; // only the initial auth message is handled
+    try {
+      const parsed = JSON.parse(message.toString());
+      if (parsed.type === 'auth' && parsed.token) {
+        const user = authenticateSocket(ws, parsed.token);
+        if (user) {
+          authenticated = true;
+          ws.send(JSON.stringify({ type: 'auth_ok' }));
+        } else {
+          ws.send(JSON.stringify({ type: 'auth_failed' }));
+        }
+      }
+    } catch (error) {
+      logger.error('WS message parse error:', error.message);
+    }
+  });
+
   ws.on('close', () => logger.info('WebSocket client disconnected'));
 });
 

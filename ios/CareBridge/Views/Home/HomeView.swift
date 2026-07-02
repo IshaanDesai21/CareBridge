@@ -5,6 +5,7 @@ import WidgetKit
 
 struct HomeView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @StateObject private var accessibility = AccessibilityManager.shared
     @State private var showCallDialog = false
     @State private var showAIChat = false
     @State private var alertSent = false
@@ -14,13 +15,20 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Hi, \(authManager.currentUser?.firstName ?? "there")")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color(red: 0.1, green: 0.12, blue: 0.18))
-                    Text("How are you feeling today?")
-                        .font(.system(size: 17))
-                        .foregroundStyle(.secondary)
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Hi, \(authManager.currentUser?.firstName ?? "there")")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color(red: 0.1, green: 0.12, blue: 0.18))
+                        Text("How are you feeling today?")
+                            .font(.system(size: 17))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    NotificationBellButton()
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.cbPrimary)
+                        .padding(.top, 8)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
@@ -37,7 +45,10 @@ struct HomeView: View {
                         )
                     }
 
-                    Button(action: { showCallDialog = true }) {
+                    Button(action: {
+                        accessibility.hapticImpact(.medium)
+                        showCallDialog = true
+                    }) {
                         ActionButton(
                             title: alertSent ? "Caregiver Notified" : "Call Caregiver",
                             subtitle: alertSent ? "Your team has been alerted" : "Request help from your care team",
@@ -46,8 +57,12 @@ struct HomeView: View {
                         )
                     }
                     .disabled(sendingAlert)
+                    .accessibilityHint(accessibility.hint("Opens options to request help from your care team"))
 
-                    Button(action: { showAIChat = true }) {
+                    Button(action: {
+                        accessibility.hapticImpact(.light)
+                        showAIChat = true
+                    }) {
                         ActionButton(
                             title: "Talk with AI",
                             subtitle: "Your companion is here",
@@ -55,6 +70,7 @@ struct HomeView: View {
                             color: Color.cbTeal
                         )
                     }
+                    .accessibilityHint(accessibility.hint("Opens a chat with your AI companion"))
                 }
                 .padding(.horizontal, 24)
 
@@ -125,8 +141,10 @@ struct HomeView: View {
         do {
             try await APIService.shared.sendAlert(message: message, isUrgent: urgent, token: token)
             alertSent = true
+            accessibility.hapticNotification(.success)
         } catch {
             alertError = "Could not reach server. Is the backend running at \(APIService.defaultServerURL)?"
+            accessibility.hapticNotification(.error)
         }
         sendingAlert = false
     }
@@ -200,12 +218,15 @@ struct ChatBubble: View {
 struct AIChatView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
+    @StateObject private var accessibility = AccessibilityManager.shared
+    @StateObject private var speech = SpeechManager()
 
     @State private var companionName = "Alex"
     @State private var messages: [ChatMessage] = []
     @State private var inputText = ""
     @State private var isSending = false
     @State private var isLoadingCompanion = true
+    @State private var micPermissionDenied = false
 
     var body: some View {
         NavigationStack {
@@ -241,16 +262,41 @@ struct AIChatView: View {
                                 .padding(.vertical, 12)
                             }
                             .onChange(of: messages.count) { _, _ in
-                                withAnimation { proxy.scrollTo(messages.last?.id) }
+                                withAnimation(accessibility.animation()) { proxy.scrollTo(messages.last?.id) }
                             }
                             .onChange(of: isSending) { _, sending in
-                                if sending { withAnimation { proxy.scrollTo("loading") } }
+                                if sending { withAnimation(accessibility.animation()) { proxy.scrollTo("loading") } }
                             }
+                        }
+
+                        if let speechError = speech.errorMessage {
+                            Text(speechError)
+                                .font(.caption).foregroundStyle(.red)
+                                .padding(.horizontal, 16)
+                        } else if micPermissionDenied {
+                            Text("Microphone/speech access denied. Enable it in iOS Settings to use voice input.")
+                                .font(.caption).foregroundStyle(.red)
+                                .padding(.horizontal, 16)
                         }
 
                         Divider()
 
                         HStack(spacing: 10) {
+                            Button {
+                                accessibility.hapticImpact(.light)
+                                toggleRecording()
+                            } label: {
+                                Image(systemName: speech.isRecording ? "mic.fill" : "mic")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(speech.isRecording ? Color.white : Color.cbPrimary)
+                                    .frame(width: 38, height: 38)
+                                    .background(speech.isRecording ? Color.cbRed : Color.cbBackground)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.cbBorder, lineWidth: speech.isRecording ? 0 : 1))
+                            }
+                            .accessibilityLabel(speech.isRecording ? "Stop voice input" : "Start voice input")
+                            .accessibilityHint(accessibility.hint("Speak your message instead of typing"))
+
                             TextField("Say something…", text: $inputText, axis: .vertical)
                                 .lineLimit(1...4)
                                 .padding(.horizontal, 14)
@@ -259,12 +305,17 @@ struct AIChatView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
                                 .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.cbBorder, lineWidth: 1))
 
-                            Button { Task { await send() } } label: {
+                            Button {
+                                accessibility.hapticImpact(.light)
+                                if speech.isRecording { speech.stopRecording() }
+                                Task { await send() }
+                            } label: {
                                 Image(systemName: "arrow.up.circle.fill")
                                     .font(.system(size: 34))
                                     .foregroundStyle(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isSending
                                         ? Color.cbBorder : Color.cbPrimary)
                             }
+                            .accessibilityHint(accessibility.hint("Sends your message"))
                             .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
                         }
                         .padding(.horizontal, 16)
@@ -278,11 +329,30 @@ struct AIChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { speech.stopRecording(); dismiss() }
                 }
             }
         }
+        .onChange(of: speech.transcript) { _, newValue in
+            guard speech.isRecording else { return }
+            inputText = newValue
+        }
         .task { await loadCompanion() }
+    }
+
+    private func toggleRecording() {
+        if speech.isRecording {
+            speech.stopRecording()
+            return
+        }
+        speech.requestAuthorization { granted in
+            if granted {
+                micPermissionDenied = false
+                speech.startRecording()
+            } else {
+                micPermissionDenied = true
+            }
+        }
     }
 
     @MainActor
@@ -300,8 +370,19 @@ struct AIChatView: View {
                 companionName = gender == "male" ? "James" : gender == "female" ? "Rose" : "Alex"
             }
         } catch {}
-        setupGreeting()
+        await loadHistory(token: token)
         isLoadingCompanion = false
+    }
+
+    /// Restores the conversation the server remembers for this user. Falls back
+    /// to a fresh greeting only if there's no prior history (e.g. first chat ever).
+    @MainActor
+    private func loadHistory(token: String) async {
+        if let history = try? await APIService.shared.getChatHistory(token: token), !history.isEmpty {
+            messages = history.map { ChatMessage(role: $0.role, text: $0.content) }
+        } else {
+            setupGreeting()
+        }
     }
 
     private func setupGreeting() {
@@ -332,6 +413,7 @@ struct AIChatView: View {
             messages.append(ChatMessage(role: "assistant", text: replyText))
         } catch {
             messages.append(ChatMessage(role: "assistant", text: "Sorry, I'm having trouble connecting right now. Try again in a moment!"))
+            accessibility.hapticNotification(.error)
         }
         isSending = false
     }

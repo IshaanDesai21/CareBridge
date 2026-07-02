@@ -110,6 +110,9 @@ struct CaregiverView: View {
             .navigationTitle("Dashboard")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    NotificationBellButton()
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button { Task { await load() } } label: {
                         Image(systemName: "arrow.clockwise")
                     }
@@ -117,6 +120,7 @@ struct CaregiverView: View {
             }
         }
         .task { await load() }
+        .onChange(of: LiveNotificationsManager.shared.lastReceivedAt) { _, _ in Task { await load() } }
     }
 
     @MainActor private func load() async {
@@ -964,25 +968,62 @@ struct FamilyPortalView: View {
 // MARK: - Scan medication placeholder
 
 struct ScanMedicationView: View {
+    @EnvironmentObject var authManager: AuthenticationManager
+    @State private var patients: [Patient] = []
+    @State private var loading = true
+    @State private var selectedPatient: Patient?
+
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Image(systemName: "camera.viewfinder")
-                .font(.system(size: 72)).foregroundStyle(Color.cbTeal)
-            VStack(spacing: 8) {
-                Text("Scan Medication")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color(red: 0.1, green: 0.12, blue: 0.18))
-                Text("Coming soon").font(.subheadline).foregroundStyle(.secondary)
+        NavigationStack {
+            Group {
+                if loading {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if patients.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "camera.viewfinder")
+                            .font(.system(size: 56)).foregroundStyle(Color.cbTeal)
+                        Text("No patients yet").font(.headline)
+                        Text("Add a patient before scanning medications for them.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center).padding(.horizontal, 32)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        Section {
+                            Text("Choose the patient this medication belongs to. Then point the camera at the label — it fills in the details automatically.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
+                        Section("Patients") {
+                            ForEach(patients) { patient in
+                                Button {
+                                    selectedPatient = patient
+                                } label: {
+                                    PatientRow(patient: patient)
+                                }
+                                .foregroundStyle(.primary)
+                            }
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                }
             }
-            Text("Point your camera at a medication label to automatically log it, check for interactions, and verify dosage.")
-                .font(.body).foregroundStyle(.secondary)
-                .multilineTextAlignment(.center).padding(.horizontal, 40)
-            Spacer()
+            .background(Color.cbBackground.ignoresSafeArea())
+            .navigationTitle("Scan Medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $selectedPatient) { patient in
+                AddMedicationView(patientId: patient.id, autoOpenScanner: true)
+                    .environmentObject(authManager)
+            }
         }
-        .background(Color.cbBackground.ignoresSafeArea())
-        .navigationTitle("Scan Medication")
-        .navigationBarTitleDisplayMode(.inline)
+        .task { await load() }
+    }
+
+    @MainActor
+    private func load() async {
+        guard let token = authManager.token else { loading = false; return }
+        patients = (try? await APIService.shared.getPatients(token: token)) ?? []
+        loading = false
     }
 }
 

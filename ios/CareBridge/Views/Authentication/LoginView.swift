@@ -203,25 +203,7 @@ struct LoginView: View {
     private func demoLogin(role: String) async {
         isLoading = true
         errorMessage = nil
-        
-        let demoEmail = "\(role)@demo.com"
-        do {
-            try await authManager.login(email: demoEmail, password: "demo1234")
-        } catch {
-            do {
-                try await authManager.register(
-                    email: demoEmail,
-                    password: "demo1234",
-                    firstName: "Demo",
-                    lastName: role.capitalized,
-                    role: role,
-                    phone: role == "family" ? "555-000-0000" : nil
-                )
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-        
+        authManager.loginAsDemo(role: role)
         isLoading = false
     }
 }

@@ -27,6 +27,12 @@
 		DB339767017760FD227417C9 /* WellnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA829762EAE5922F423DDBE /* WellnessView.swift */; };
 		E8C4706738AAB307A3DAB5E4 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */; };
 		F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601234567890A /* AddMedicationView.swift */; };
+		FE6407A2697AA59FE9A8409C /* AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8EA82736EF1345B727963B /* AccessibilityManager.swift */; };
+		306959CC017B6EC187BDC6FE /* NotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */; };
+		8AF9339E4C586D13E03E0A0D /* LiveNotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */; };
+		F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B8FD15412A91C92801C91E /* SpeechManager.swift */; };
+		4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */; };
+		B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CF2202915AC6C596833DEC /* MedicationScannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,6 +81,12 @@
 		EF9D42E72583C2D66B44EC37 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		F639552A5B936CD1ECB04602 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F601234567890A /* AddMedicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationView.swift; sourceTree = "<group>"; };
+		5D8EA82736EF1345B727963B /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityManager.swift; sourceTree = "<group>"; };
+		FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsManager.swift; sourceTree = "<group>"; };
+		661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNotificationsManager.swift; sourceTree = "<group>"; };
+		D3B8FD15412A91C92801C91E /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
+		9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		49CF2202915AC6C596833DEC /* MedicationScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -158,6 +170,10 @@
 			isa = PBXGroup;
 			children = (
 				5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */,
+				5D8EA82736EF1345B727963B /* AccessibilityManager.swift */,
+				FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */,
+				661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */,
+				D3B8FD15412A91C92801C91E /* SpeechManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -192,6 +208,7 @@
 			children = (
 				7682D16144CA3917B29CAAE6 /* MedicationsView.swift */,
 				A1B2C3D4E5F601234567890A /* AddMedicationView.swift */,
+				49CF2202915AC6C596833DEC /* MedicationScannerView.swift */,
 			);
 			path = Medications;
 			sourceTree = "<group>";
@@ -205,10 +222,19 @@
 				3273C702402165231D517008 /* Journal */,
 				BC05BC68442F43F57B96E3C3 /* Main */,
 				5AEBCA16CB34CDF3A285946C /* Medications */,
+				7461A03E2727DCFCB31F7713 /* Notifications */,
 				07DD1D5A25A4FED8D9A1212E /* Profile */,
 				D7149BBA9C6BEC074540B3E6 /* Wellness */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		7461A03E2727DCFCB31F7713 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		8AEAEDCAD7560B24DDE24404 /* Models */ = {
@@ -386,6 +412,12 @@
 				3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */,
 				DB339767017760FD227417C9 /* WellnessView.swift in Sources */,
 				F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */,
+				FE6407A2697AA59FE9A8409C /* AccessibilityManager.swift in Sources */,
+				306959CC017B6EC187BDC6FE /* NotificationsManager.swift in Sources */,
+				8AF9339E4C586D13E03E0A0D /* LiveNotificationsManager.swift in Sources */,
+				F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */,
+				4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */,
+				B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

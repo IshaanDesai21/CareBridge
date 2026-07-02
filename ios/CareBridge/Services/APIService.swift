@@ -197,22 +197,23 @@ class APIService {
         return response.medications
     }
 
-    func addMedication(patientId: Int, name: String, dosage: String, frequency: String, token: String) async throws -> Medication {
+    func addMedication(patientId: Int, name: String, dosage: String, frequency: String, instructions: String? = nil, token: String) async throws -> Medication {
         if APIService.isDemoMode {
             return Medication(id: Int.random(in: 100...999), patientId: patientId,
                               name: name, dosage: dosage, frequency: frequency,
-                              instructions: nil, isActive: 1)
+                              instructions: instructions, isActive: 1)
         }
         struct MedRequest: Codable {
             let patientId: Int
             let name: String
             let dosage: String
             let frequency: String
+            let instructions: String?
         }
         struct MedResponse: Codable {
             let medication: Medication
         }
-        let req = MedRequest(patientId: patientId, name: name, dosage: dosage, frequency: frequency)
+        let req = MedRequest(patientId: patientId, name: name, dosage: dosage, frequency: frequency, instructions: instructions)
         let response: MedResponse = try await post(endpoint: "/medications", body: req, token: token)
         return response.medication
     }
@@ -349,6 +350,28 @@ class APIService {
         let body = ChatRequest(message: message, patientGender: patientGender, history: history)
         let response: ChatResponse = try await post(endpoint: "/ai/chat", body: body, token: token)
         return (response.message, response.companionName ?? "Alex")
+    }
+
+    /// Restores the companion conversation the server remembers for this user,
+    /// so reopening the chat continues where it left off instead of starting over.
+    func getChatHistory(token: String) async throws -> [ChatHistoryMessage] {
+        if APIService.isDemoMode { return [] }
+        struct HistoryResponse: Codable { let messages: [ChatHistoryMessage] }
+        let response: HistoryResponse = try await get(endpoint: "/ai/chat/history", token: token)
+        return response.messages
+    }
+
+    // MARK: - Medication scanning
+
+    func parseMedicationLabel(text: String, token: String) async throws -> ScannedMedication {
+        if APIService.isDemoMode {
+            try await Task.sleep(nanoseconds: 700_000_000)
+            return ScannedMedication(name: "Lisinopril", dosage: "10mg", frequency: "Once daily", instructions: "Take with food", confidence: "high")
+        }
+        struct ParseRequest: Codable { let text: String }
+        struct ParseResponse: Codable { let medication: ScannedMedication }
+        let response: ParseResponse = try await post(endpoint: "/ai/parse-medication", body: ParseRequest(text: text), token: token)
+        return response.medication
     }
 
     // MARK: - Patient Physical Details
