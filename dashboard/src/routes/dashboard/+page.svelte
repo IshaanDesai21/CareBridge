@@ -12,7 +12,8 @@
 		getPatients, submitWellnessCheckin, getWellnessHistory, getCareNotes,
 		createCareNote, getMedications, createMedication, getAiInsights,
 		getLinkedPatient, familyLink, getPatientJoinCode, getPatientDetails,
-		getAiOverview, getAlerts, acknowledgeAlert
+		getAiOverview, getAlerts, acknowledgeAlert,
+		getMyOrganization, createOrganization, joinOrganization
 	} from '$lib/api';
 
 	// ─── Static demo data ────────────────────────────────────────────────────
@@ -127,6 +128,10 @@
 
 	let patients = [];
 	let alerts = [];
+	let organization = null;
+	let orgNameInput = '';
+	let orgCodeInput = '';
+	let orgBusy = false;
 	let selectedPatient = null;
 	let wellnessHistory = [];
 	let careNotes = [];
@@ -148,7 +153,12 @@
 	let familyMeds = [];
 	let familyNotes = [];
 
-	let checkin = { energy: 5, mood: 5, pain: 5, fatigue: 5, appetite: 5, hydration: 5, notes: '' };
+	const EMPTY_CHECKIN = {
+		energy: 5, fatigue: 5, pain: 5, mood: 5, sleepQuality: 5, breathing: 5,
+		mobility: 5, balance: 5, speechClarity: 5, appetite: 5, hydration: 5,
+		swallowingDifficulty: 5, weight: '', notes: ''
+	};
+	let checkin = { ...EMPTY_CHECKIN };
 	let submittingCheckin = false;
 	let newNote = { content: '', note_type: 'observation' };
 	let submittingNote = false;
@@ -172,23 +182,85 @@
 			user = state.user;
 			if (user.role === 'caregiver' || user.role === 'organization') {
 				await loadCaregiverData();
+				connectRealtime(state.token);
 			} else if (user.role === 'family') {
 				await loadFamilyData();
 			}
 			loading = false;
 		});
-		return unsub;
+		return () => { unsub(); disconnectRealtime(); };
 	});
+
+	// ─── Real-time alerts (patient "Call caregiver" over WebSocket) ─────────────
+	let ws = null;
+	let wsRetry = null;
+	let wsClosedByUs = false;
+
+	function connectRealtime(token) {
+		if (!token || typeof window === 'undefined') return;
+		if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+		const base = import.meta.env.VITE_API_URL || window.location.origin;
+		const wsUrl = base.replace(/^http/, 'ws');
+		try { ws = new WebSocket(wsUrl); } catch (e) { return; }
+
+		ws.addEventListener('open', () => ws.send(JSON.stringify({ type: 'auth', token })));
+		ws.addEventListener('message', async (ev) => {
+			let msg;
+			try { msg = JSON.parse(ev.data); } catch { return; }
+			if (msg.type === 'notification' && msg.notification) {
+				const n = msg.notification;
+				addNotification(n.title || 'New alert', n.type === 'urgent' ? 'error' : 'success', 8000);
+				// Refresh the Patient Alerts panel instantly so the call shows up live.
+				try { const a = await getAlerts(); alerts = a.alerts || []; } catch {}
+			}
+		});
+		ws.addEventListener('close', () => {
+			if (wsClosedByUs) return;
+			wsRetry = setTimeout(() => connectRealtime(token), 4000); // auto-reconnect
+		});
+		ws.addEventListener('error', () => { try { ws.close(); } catch {} });
+	}
+
+	function disconnectRealtime() {
+		wsClosedByUs = true;
+		if (wsRetry) clearTimeout(wsRetry);
+		if (ws) { try { ws.close(); } catch {} ws = null; }
+	}
 
 	// ─── Data loading ─────────────────────────────────────────────────────────
 	async function loadCaregiverData() {
 		try {
-			const [pResult, aResult] = await Promise.allSettled([getPatients(), getAlerts()]);
+			const [pResult, aResult, oResult] = await Promise.allSettled([getPatients(), getAlerts(), getMyOrganization()]);
 			patients = ((pResult.value?.patients) || []).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
 			alerts = aResult.value?.alerts || [];
+			organization = oResult.value?.organization || null;
 		} catch (e) {
 			addNotification('Failed to load patients. Is the backend running?', 'error');
 		}
+	}
+
+	async function handleCreateOrg() {
+		if (!orgNameInput.trim()) return;
+		orgBusy = true;
+		try {
+			const res = await createOrganization(orgNameInput.trim());
+			organization = res.organization;
+			orgNameInput = '';
+			addNotification(`Organization "${organization.name}" created.`, 'success');
+		} catch (e) { addNotification(e.message || 'Failed to create organization', 'error'); }
+		finally { orgBusy = false; }
+	}
+
+	async function handleJoinOrg() {
+		if (!orgCodeInput.trim()) return;
+		orgBusy = true;
+		try {
+			await joinOrganization(orgCodeInput.trim().toUpperCase());
+			orgCodeInput = '';
+			await loadCaregiverData(); // refresh org + now-scoped patient/alert lists
+			addNotification(`Joined ${organization?.name || 'organization'}.`, 'success');
+		} catch (e) { addNotification(e.message || 'Failed to join organization', 'error'); }
+		finally { orgBusy = false; }
 	}
 
 	async function loadFamilyData() {
@@ -283,18 +355,22 @@
 			selectedPatient = { ...selectedPatient, wellness_score: score };
 			patients = patients.map(p => p.id === selectedPatient.id ? selectedPatient : p).sort((a, b) => a.wellness_score - b.wellness_score);
 			addNotification('Check-in submitted! (Demo)', 'success');
-			checkin = { energy: 5, mood: 5, pain: 5, fatigue: 5, appetite: 5, hydration: 5, notes: '' };
+			checkin = { ...EMPTY_CHECKIN };
 			activeTab = 'overview';
 			submittingCheckin = false;
 			return;
 		}
 		try {
-			const result = await submitWellnessCheckin({ patientId: selectedPatient.id, ...checkin });
+			const result = await submitWellnessCheckin({
+				patientId: selectedPatient.id,
+				...checkin,
+				weight: checkin.weight === '' || checkin.weight == null ? null : parseFloat(checkin.weight)
+			});
 			selectedPatient = { ...selectedPatient, wellness_score: result.wellnessScore || selectedPatient.wellness_score };
 			patients = patients.map(p => p.id === selectedPatient.id ? selectedPatient : p).sort((a, b) => (a.wellness_score || 0) - (b.wellness_score || 0));
 			const h = await getWellnessHistory(selectedPatient.id); wellnessHistory = h?.checkins || h?.history || [];
 			addNotification('Check-in submitted!', 'success');
-			checkin = { energy: 5, mood: 5, pain: 5, fatigue: 5, appetite: 5, hydration: 5, notes: '' };
+			checkin = { ...EMPTY_CHECKIN };
 			activeTab = 'overview';
 		} catch (e) { addNotification(e.message, 'error'); } finally { submittingCheckin = false; }
 	}
@@ -786,6 +862,44 @@
 			<!-- ── All Patients ── -->
 			{#if activeTab === 'all_patients'}
 				<div class="fade-in">
+					<!-- Organization -->
+					{#if organization}
+						<div class="org-card">
+							<div class="org-card-main">
+								<div class="org-badge">{(organization.name || 'O').charAt(0).toUpperCase()}</div>
+								<div>
+									<div class="org-name">{organization.name}</div>
+									<div class="org-meta">{organization.patient_count} patient{organization.patient_count === 1 ? '' : 's'} · {organization.member_count} member{organization.member_count === 1 ? '' : 's'}</div>
+								</div>
+							</div>
+							<div class="org-code-box">
+								<span class="org-code-label">Join code</span>
+								<span class="org-code">{organization.join_code}</span>
+								<button class="btn btn-sm btn-secondary" on:click={() => copyToClipboard(organization.join_code)}>Copy</button>
+							</div>
+						</div>
+					{:else}
+						<div class="org-card org-setup">
+							<div class="org-setup-col">
+								<div class="org-setup-title">Create an organization</div>
+								<p class="org-setup-sub">Name it and get a join code to share with your patients and caregivers.</p>
+								<div class="org-setup-row">
+									<input type="text" placeholder="Organization name" bind:value={orgNameInput} />
+									<button class="btn btn-primary btn-sm" on:click={handleCreateOrg} disabled={orgBusy || !orgNameInput.trim()}>Create</button>
+								</div>
+							</div>
+							<div class="org-setup-divider"></div>
+							<div class="org-setup-col">
+								<div class="org-setup-title">Join an organization</div>
+								<p class="org-setup-sub">Enter a code you were given.</p>
+								<div class="org-setup-row">
+									<input type="text" placeholder="Join code" bind:value={orgCodeInput} />
+									<button class="btn btn-secondary btn-sm" on:click={handleJoinOrg} disabled={orgBusy || !orgCodeInput.trim()}>Join</button>
+								</div>
+							</div>
+						</div>
+					{/if}
+
 					<!-- Alerts panel -->
 					{#if pendingAlerts.length > 0}
 						<div class="alerts-panel">
@@ -951,11 +1065,17 @@
 					<div class="sliders-grid">
 						{#each [
 							{ key: 'energy', label: 'Energy', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`, color: '#f59e0b', lowLabel: 'Exhausted', highLabel: 'Energized' },
-							{ key: 'mood', label: 'Mood', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`, color: '#10b981', lowLabel: 'Very Low', highLabel: 'Great' },
-							{ key: 'pain', label: 'Pain Level', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, color: '#ef4444', lowLabel: 'No Pain', highLabel: 'Severe' },
 							{ key: 'fatigue', label: 'Fatigue', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`, color: '#6366f1', lowLabel: 'Alert', highLabel: 'Exhausted' },
+							{ key: 'pain', label: 'Pain Level', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, color: '#ef4444', lowLabel: 'No Pain', highLabel: 'Severe' },
+							{ key: 'mood', label: 'Mood', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`, color: '#10b981', lowLabel: 'Very Low', highLabel: 'Great' },
+							{ key: 'sleepQuality', label: 'Sleep Quality', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`, color: '#8b5cf6', lowLabel: 'Poor', highLabel: 'Restful' },
+							{ key: 'breathing', label: 'Breathing', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>`, color: '#3b82f6', lowLabel: 'Labored', highLabel: 'Easy' },
+							{ key: 'mobility', label: 'Mobility', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1"/><path d="M4 17l5-1 2-4 4 3 3-1M9 12l1-4 4 1 2 3"/></svg>`, color: '#f97316', lowLabel: 'Limited', highLabel: 'Full' },
+							{ key: 'balance', label: 'Balance', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.5"/><path d="M12 6v7m-4 8l4-8 4 8M6 9h12"/></svg>`, color: '#14b8a6', lowLabel: 'Unsteady', highLabel: 'Steady' },
+							{ key: 'speechClarity', label: 'Speech Clarity', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`, color: '#6366f1', lowLabel: 'Unclear', highLabel: 'Clear' },
 							{ key: 'appetite', label: 'Appetite', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`, color: '#f97316', lowLabel: 'None', highLabel: 'Normal' },
-							{ key: 'hydration', label: 'Hydration', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>`, color: '#06b6d4', lowLabel: 'Dehydrated', highLabel: 'Well-hydrated' }
+							{ key: 'hydration', label: 'Hydration', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>`, color: '#06b6d4', lowLabel: 'Dehydrated', highLabel: 'Well-hydrated' },
+							{ key: 'swallowingDifficulty', label: 'Swallowing', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 013 3v6a3 3 0 01-6 0V5a3 3 0 013-3z"/><path d="M12 17v4"/></svg>`, color: '#e11d48', lowLabel: 'Easy', highLabel: 'Difficult' }
 						] as slider}
 							<div class="slider-card">
 								<div class="slider-header">
@@ -967,6 +1087,10 @@
 								<div class="slider-labels"><span>{slider.lowLabel}</span><span>{slider.highLabel}</span></div>
 							</div>
 						{/each}
+					</div>
+					<div class="form-group" style="margin-top: 24px;">
+						<label for="checkin-weight">Weight (kg) <span class="text-muted" style="font-weight:400">— optional</span></label>
+						<input id="checkin-weight" type="number" inputmode="decimal" step="0.1" min="0" bind:value={checkin.weight} placeholder="e.g. 68.5" />
 					</div>
 					<div class="form-group" style="margin-top: 24px;">
 						<label for="checkin-notes">Additional Notes</label>
@@ -1992,6 +2116,46 @@
 	}
 
 	/* ─── Alerts Panel ──────────────────────── */
+	/* ─── Organization card ─────────────────────── */
+	.org-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		background: var(--card, #fff);
+		border: 1px solid var(--border, #e5e7eb);
+		border-radius: 14px;
+		padding: 16px 20px;
+		margin-bottom: 20px;
+		flex-wrap: wrap;
+	}
+	.org-card-main { display: flex; align-items: center; gap: 14px; }
+	.org-badge {
+		width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+		background: var(--primary, #3b82f6); color: #fff;
+		display: flex; align-items: center; justify-content: center;
+		font-weight: 800; font-size: 1.2rem;
+	}
+	.org-name { font-weight: 700; font-size: 1.05rem; }
+	.org-meta { font-size: 0.82rem; color: var(--text-muted, #6b7280); margin-top: 2px; }
+	.org-code-box { display: flex; align-items: center; gap: 10px; }
+	.org-code-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #6b7280); }
+	.org-code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-weight: 800; font-size: 1.05rem; letter-spacing: 0.08em;
+		background: var(--bg, #f3f4f6); padding: 6px 12px; border-radius: 8px;
+	}
+	.org-setup { align-items: stretch; }
+	.org-setup-col { flex: 1; min-width: 220px; }
+	.org-setup-divider { width: 1px; align-self: stretch; background: var(--border, #e5e7eb); }
+	.org-setup-title { font-weight: 700; margin-bottom: 4px; }
+	.org-setup-sub { font-size: 0.82rem; color: var(--text-muted, #6b7280); margin: 0 0 10px; }
+	.org-setup-row { display: flex; gap: 8px; }
+	.org-setup-row input {
+		flex: 1; padding: 8px 12px; border: 1px solid var(--border, #e5e7eb);
+		border-radius: 8px; font-size: 0.9rem;
+	}
+
 	.alerts-panel {
 		background: #fff7ed;
 		border: 1.5px solid #fed7aa;

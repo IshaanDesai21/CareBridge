@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
     const db = getDb();
 
     const patient = await db.prepare(`
-      SELECT p.id, u.first_name, u.last_name
+      SELECT p.id, u.first_name, u.last_name, u.organization_id AS organization_id
       FROM patients p JOIN users u ON p.user_id = u.id
       WHERE p.user_id = ?
     `).get(req.user.id);
@@ -26,8 +26,11 @@ router.post('/', async (req, res) => {
       VALUES (?, ?, ?)
     `).run(patient.id, alertMsg, isUrgent ? 1 : 0);
 
-    // Fan-out: write in-app notification to every caregiver
-    const caregivers = await db.prepare(`SELECT id FROM users WHERE role = 'caregiver'`).all();
+    // Fan-out: notify caregivers in the patient's organization. If the patient
+    // isn't in an org yet, fall back to all caregivers (legacy behaviour).
+    const caregivers = patient.organization_id
+      ? await db.prepare(`SELECT id FROM users WHERE role IN ('caregiver', 'organization') AND organization_id = ?`).all(patient.organization_id)
+      : await db.prepare(`SELECT id FROM users WHERE role = 'caregiver'`).all();
     const patientName = `${patient.first_name} ${patient.last_name}`;
     const notifTitle = isUrgent ? `🚨 Urgent — ${patientName}` : `📞 ${patientName} is calling`;
     const notifBody = alertMsg;
@@ -63,14 +66,25 @@ router.get('/', async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
     const db = getDb();
-    const alerts = await db.prepare(`
-      SELECT pa.*, u.first_name || ' ' || u.last_name AS patient_name, p.wellness_score
-      FROM patient_alerts pa
-      JOIN patients p ON pa.patient_id = p.id
-      JOIN users u ON p.user_id = u.id
-      ORDER BY pa.is_acknowledged ASC, pa.is_urgent DESC, pa.created_at DESC
-      LIMIT 50
-    `).all();
+    const me = await db.prepare('SELECT organization_id FROM users WHERE id = ?').get(req.user.id);
+    const alerts = me?.organization_id
+      ? await db.prepare(`
+          SELECT pa.*, u.first_name || ' ' || u.last_name AS patient_name, p.wellness_score
+          FROM patient_alerts pa
+          JOIN patients p ON pa.patient_id = p.id
+          JOIN users u ON p.user_id = u.id
+          WHERE u.organization_id = ?
+          ORDER BY pa.is_acknowledged ASC, pa.is_urgent DESC, pa.created_at DESC
+          LIMIT 50
+        `).all(me.organization_id)
+      : await db.prepare(`
+          SELECT pa.*, u.first_name || ' ' || u.last_name AS patient_name, p.wellness_score
+          FROM patient_alerts pa
+          JOIN patients p ON pa.patient_id = p.id
+          JOIN users u ON p.user_id = u.id
+          ORDER BY pa.is_acknowledged ASC, pa.is_urgent DESC, pa.created_at DESC
+          LIMIT 50
+        `).all();
     res.json({ alerts });
   } catch (error) {
     logger.error('Get alerts error:', error);

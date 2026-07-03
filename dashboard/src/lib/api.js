@@ -176,3 +176,17 @@ export function getAlerts() {
 export function acknowledgeAlert(id) {
     return request(`/api/alerts/${id}/acknowledge`, { method: 'PUT' });
 }
+
+// ─── Organizations ──────────────────────────────────────────────────────────
+
+export function getMyOrganization() {
+    return request('/api/organizations/me');
+}
+
+export function createOrganization(name) {
+    return request('/api/organizations', { method: 'POST', body: JSON.stringify({ name }) });
+}
+
+export function joinOrganization(code) {
+    return request('/api/organizations/join', { method: 'POST', body: JSON.stringify({ code }) });
+}
