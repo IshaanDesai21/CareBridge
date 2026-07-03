@@ -9,9 +9,10 @@ router.use(authenticateToken);
 const NVIDIA_KEY = process.env.NVIDIA_API_KEY;
 const NVIDIA_URL = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
 
-// Model for companion chat — fast conversational responses
-const CHAT_MODEL = 'deepseek-ai/deepseek-v4-flash';
-// Model for clinical summaries / handoff overviews
+// Single NVIDIA-hosted model used for both companion chat and clinical
+// summaries/handoffs. gpt-oss-20b returns its chain-of-thought in a separate
+// `reasoning_content` field and the final answer in `content`.
+const CHAT_MODEL = 'openai/gpt-oss-20b';
 const SUMMARY_MODEL = 'openai/gpt-oss-20b';
 
 function stripThinkTags(text) {
@@ -27,13 +28,12 @@ async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MOD
       ...(Array.isArray(messages) ? messages : [{ role: 'user', content: messages }])
     ],
     temperature: 1,
-    top_p: 0.95,
-    max_tokens: maxTokens,
+    top_p: 1,
+    // gpt-oss-20b spends part of the token budget on hidden reasoning before the
+    // final answer, so give it real headroom or replies come back empty/truncated.
+    max_tokens: Math.max(maxTokens, 1024),
     stream: false
   };
-  if (model === CHAT_MODEL) {
-    body.extra_body = { chat_template_kwargs: { thinking: true, reasoning_effort: 'high' } };
-  }
   const res = await fetch(`${NVIDIA_URL}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${NVIDIA_KEY}` },
@@ -45,9 +45,9 @@ async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MOD
   }
   const data = await res.json();
   const msg = data.choices[0].message;
-  // Extract reasoning if present, then return content
-  const content = msg.content || '';
-  return stripThinkTags(content);
+  // The real answer is in `content`; `reasoning_content` holds the hidden
+  // chain-of-thought which we deliberately drop. Also strip any <think> tags.
+  return stripThinkTags(msg.content || '');
 }
 
 // ─── Patient AI Overview ──────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ Rules:
       // The user turn we just inserted is the last row — drop it, it's re-added explicitly below
       const history = storedHistory.slice(0, -1);
       const userTurn = { role: 'user', content: message };
-      reply = await callAI(systemPrompt, [...history, userTurn], 512, CHAT_MODEL);
+      reply = await callAI(systemPrompt, [...history, userTurn], 2048, CHAT_MODEL);
     } else {
       // Warm fallbacks in the companion's voice
       const fallbacks = [

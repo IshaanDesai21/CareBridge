@@ -260,6 +260,19 @@ async function initializeTables() {
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS care_team TEXT;
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_name TEXT;
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_gender TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id INTEGER;
+  `);
+
+  // Organizations: an owner creates + names an org and gets a single join code.
+  // Caregivers and patients both join with that code (users.organization_id).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS organizations (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      join_code TEXT UNIQUE NOT NULL,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   await pool.query(`

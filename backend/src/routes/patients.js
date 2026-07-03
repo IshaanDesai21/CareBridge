@@ -20,12 +20,25 @@ router.get('/', async (req, res) => {
         WHERE fpl.family_user_id = ?
       `).all(req.user.id);
     } else {
-      patients = await db.prepare(`
-        SELECT p.*, u.email, u.first_name, u.last_name
-        FROM patients p
-        JOIN users u ON p.user_id = u.id
-        ORDER BY p.wellness_score ASC, u.last_name ASC
-      `).all();
+      // Caregiver / organization: scope to their organization if they belong to
+      // one; otherwise (legacy / no org) fall back to all patients.
+      const me = await db.prepare('SELECT organization_id FROM users WHERE id = ?').get(req.user.id);
+      if (me?.organization_id) {
+        patients = await db.prepare(`
+          SELECT p.*, u.email, u.first_name, u.last_name
+          FROM patients p
+          JOIN users u ON p.user_id = u.id
+          WHERE u.organization_id = ?
+          ORDER BY p.wellness_score ASC, u.last_name ASC
+        `).all(me.organization_id);
+      } else {
+        patients = await db.prepare(`
+          SELECT p.*, u.email, u.first_name, u.last_name
+          FROM patients p
+          JOIN users u ON p.user_id = u.id
+          ORDER BY p.wellness_score ASC, u.last_name ASC
+        `).all();
+      }
     }
     res.json({ patients });
   } catch (error) {

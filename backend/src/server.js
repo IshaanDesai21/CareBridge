@@ -22,6 +22,7 @@ import careNotesRoutes from './routes/careNotes.js';
 import aiRoutes from './routes/ai.js';
 import familyRoutes from './routes/family.js';
 import alertRoutes from './routes/alerts.js';
+import organizationRoutes from './routes/organizations.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -132,6 +133,7 @@ app.use('/api/care-notes', careNotesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/family', familyRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/organizations', organizationRoutes);
 
 // WebSocket
 wss.on('error', (error) => {
