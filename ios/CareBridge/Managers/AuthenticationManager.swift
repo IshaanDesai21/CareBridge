@@ -41,6 +41,21 @@ class AuthenticationManager: ObservableObject {
         UserDefaults.standard.set(response.token, forKey: "authToken")
     }
 
+    func loginWithApple(identityToken: String, firstName: String? = nil, lastName: String? = nil, role: String = "patient") async throws {
+        let response = try await apiService.loginWithApple(identityToken: identityToken, firstName: firstName, lastName: lastName, role: role)
+        self.token = response.token
+        self.currentUser = response.user
+        self.isAuthenticated = true
+        UserDefaults.standard.set(response.token, forKey: "authToken")
+    }
+
+    func deleteAccount() async throws {
+        if let token = token, token != "demo-token" {
+            try await apiService.deleteAccount(token: token)
+        }
+        logout()
+    }
+
     func register(email: String, password: String, firstName: String, lastName: String, role: String = "patient", phone: String? = nil, joinCode: String? = nil) async throws {
         let response = try await apiService.register(
             email: email, password: password, role: role,

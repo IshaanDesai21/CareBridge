@@ -160,7 +160,7 @@ export function getAiInsights(patientId) {
 }
 
 export function generateAiSummary(patientId) {
-    return request(`/api/ai/summary/${patientId}`, { method: 'POST' });
+    return request(`/api/ai/summary/${patientId}`);
 }
 
 export function getAiOverview(patientId) {

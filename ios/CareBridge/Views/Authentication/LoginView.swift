@@ -1,6 +1,6 @@
 
 import SwiftUI
-import GoogleSignIn
+import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject var authManager: AuthenticationManager
@@ -144,21 +144,14 @@ struct LoginView: View {
                         }
                         .padding(.vertical, 4)
 
-                        Button {
-                            signInWithGoogle()
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "globe")
-                                Text("Sign in with Google")
-                                    .font(.headline)
-                            }
-                            .foregroundStyle(Color.black.opacity(0.87))
-                            .frame(maxWidth: .infinity)
-                            .padding()
+                        SignInWithAppleButton(.signIn) { request in
+                            request.requestedScopes = [.fullName, .email]
+                        } onCompletion: { result in
+                            handleAppleSignIn(result)
                         }
-                        .background(Color.white)
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: 52)
                         .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cbBorder, lineWidth: 1.5))
                         .disabled(isLoading)
                     }
 
@@ -232,32 +225,40 @@ struct LoginView: View {
         isLoading = false
     }
 
-    private func signInWithGoogle() {
-        guard let rootVC = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow })?.rootViewController
-        else { return }
-
-        isLoading = true
-        errorMessage = nil
-
-        GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { result, error in
+    private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken,
+                  let identityToken = String(data: tokenData, encoding: .utf8) else {
+                errorMessage = "Apple sign-in failed"
+                return
+            }
+            isLoading = true
+            errorMessage = nil
             Task { @MainActor in
-                guard let idToken = result?.user.idToken?.tokenString else {
-                    errorMessage = error?.localizedDescription ?? "Google sign-in failed"
-                    isLoading = false
-                    return
-                }
                 do {
-                    try await authManager.loginWithGoogle(idToken: idToken, role: "patient")
+                    // Apple only shares the name on the first authorization —
+                    // forward it so the backend can store it at account creation.
+                    try await authManager.loginWithApple(
+                        identityToken: identityToken,
+                        firstName: credential.fullName?.givenName,
+                        lastName: credential.fullName?.familyName,
+                        role: "patient"
+                    )
                 } catch {
                     errorMessage = error.localizedDescription
                 }
                 isLoading = false
             }
+        case .failure(let error):
+            // Tapping outside the sheet cancels — not worth surfacing as an error.
+            if (error as? ASAuthorizationError)?.code != .canceled {
+                errorMessage = error.localizedDescription
+            }
         }
     }
+
 }
 
 #Preview {

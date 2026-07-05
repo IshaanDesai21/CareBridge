@@ -54,6 +54,11 @@ async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MOD
 // Collects all patient data and generates a clinical handoff overview paragraph.
 router.get('/overview/:patientId', async (req, res) => {
   try {
+    if (!NVIDIA_KEY) {
+      return res.status(503).json({
+        error: 'AI is not configured on the server. Set NVIDIA_API_KEY in backend/.env and restart.'
+      });
+    }
     const { patientId } = req.params;
     const db = getDb();
 
@@ -209,7 +214,7 @@ Rules:
 - Never say you are "just an AI" — be present and real in your responses
 - Sign off naturally, never robotically`;
 
-    let reply;
+    let reply = null;
     if (NVIDIA_KEY && message) {
       // Prefer the server's own memory of this conversation (chat_messages) over
       // whatever the client sends, so the companion remembers across app launches.
@@ -221,8 +226,15 @@ Rules:
       // The user turn we just inserted is the last row — drop it, it's re-added explicitly below
       const history = storedHistory.slice(0, -1);
       const userTurn = { role: 'user', content: message };
-      reply = await callAI(systemPrompt, [...history, userTurn], 2048, CHAT_MODEL);
-    } else {
+      try {
+        reply = await callAI(systemPrompt, [...history, userTurn], 2048, CHAT_MODEL);
+      } catch (err) {
+        // Upstream AI failure shouldn't kill the conversation — fall through to
+        // the canned companion lines below.
+        logger.error('AI chat upstream error:', err.message);
+      }
+    }
+    if (!reply) {
       // Warm fallbacks in the companion's voice
       const fallbacks = [
         `It's so good to hear from you, ${patientFirst}! What's been on your mind today?`,

@@ -40,6 +40,11 @@ function validateEnv() {
   if (/user:password@host\/dbname/.test(process.env.DATABASE_URL || '')) {
     problems.push('DATABASE_URL is still the placeholder value.');
   }
+  // AI features (companion chat, handoff overview) need this — warn loudly but
+  // don't block boot, since the rest of the API works without it.
+  if (!process.env.NVIDIA_API_KEY) {
+    logger.warn('⚠️  NVIDIA_API_KEY is not set — AI chat will use canned fallback replies and AI overview/summary will be unavailable.');
+  }
 
   if (problems.length) {
     if (isProduction) {

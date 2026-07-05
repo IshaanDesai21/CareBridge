@@ -102,6 +102,33 @@ class APIService {
         return (response.user, response.token)
     }
 
+    func loginWithApple(identityToken: String, firstName: String? = nil, lastName: String? = nil, role: String = "patient") async throws -> (user: User, token: String) {
+        if APIService.isDemoMode {
+            return (APIService.demoUser(for: role), "demo-token")
+        }
+        struct AppleRequest: Codable {
+            let identityToken: String
+            let firstName: String?
+            let lastName: String?
+            let role: String
+        }
+        struct AppleResponse: Codable {
+            let user: User
+            let token: String
+        }
+        let request = AppleRequest(identityToken: identityToken, firstName: firstName, lastName: lastName, role: role)
+        let response: AppleResponse = try await post(endpoint: "/auth/apple", body: request)
+        return (response.user, response.token)
+    }
+
+    /// Permanently deletes the signed-in user's account and all their data
+    /// (App Store Review Guideline 5.1.1(v) requires this to be available in-app).
+    func deleteAccount(token: String) async throws {
+        if APIService.isDemoMode { return }
+        struct DeleteResponse: Codable { let success: Bool }
+        let _: DeleteResponse = try await delete(endpoint: "/auth/account", token: token)
+    }
+
     func getCurrentUser(token: String) async throws -> User {
         if APIService.isDemoMode {
             return APIService.demoUser(for: APIService.demoUserRole)
@@ -474,6 +501,15 @@ class APIService {
         return try await performRequest(request)
     }
     
+    private func delete<T: Codable>(endpoint: String, token: String? = nil) async throws -> T {
+        guard let url = URL(string: baseURL + endpoint) else { throw APIError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        return try await performRequest(request)
+    }
+
     private func performRequest<T: Codable>(_ request: URLRequest) async throws -> T {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
