@@ -1,5 +1,4 @@
 import SwiftUI
-import GoogleSignIn
 
 // ─── CareBridge Color Palette ─────────────────────────────────────────────────
 extension Color {
@@ -148,9 +147,6 @@ struct CareBridgeApp: App {
                         .preferredColorScheme(.light)
                         .accessibleRoot()
                 }
-            }
-            .onOpenURL { url in
-                GIDSignIn.sharedInstance.handle(url)
             }
         }
     }

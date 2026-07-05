@@ -9,6 +9,9 @@ struct ProfileView: View {
     @State private var patientId: Int?
     @State private var isLoading = true
     @State private var showEditPhysical = false
+    @State private var showDeleteConfirm = false
+    @State private var isDeletingAccount = false
+    @State private var deleteError: String?
 
     var body: some View {
         NavigationStack {
@@ -97,9 +100,48 @@ struct ProfileView: View {
                         Label("Sign Out", systemImage: "arrow.right.square")
                     }
                 }
+
+                // Account deletion — required in-app by App Store Guideline 5.1.1(v).
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteConfirm = true
+                    } label: {
+                        if isDeletingAccount {
+                            HStack {
+                                ProgressView()
+                                Text("Deleting Account…")
+                            }
+                        } else {
+                            Label("Delete Account", systemImage: "trash")
+                        }
+                    }
+                    .disabled(isDeletingAccount)
+                } footer: {
+                    Text("Permanently deletes your account and all associated data, including check-ins, medications, notes, and chat history. This cannot be undone.")
+                }
             }
             .navigationTitle("Profile")
             .task { await loadDetails() }
+            .confirmationDialog(
+                "Delete your account?",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Everything", role: .destructive) {
+                    Task { await deleteAccount() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently removes your account and all health data from CareBridge. This action cannot be undone.")
+            }
+            .alert("Couldn't Delete Account", isPresented: .init(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK", role: .cancel) { deleteError = nil }
+            } message: {
+                Text(deleteError ?? "")
+            }
         }
     }
 
@@ -111,6 +153,16 @@ struct ProfileView: View {
         let f = authManager.currentUser?.firstName?.first.map(String.init) ?? ""
         let l = authManager.currentUser?.lastName?.first.map(String.init) ?? ""
         return f + l
+    }
+
+    private func deleteAccount() async {
+        isDeletingAccount = true
+        do {
+            try await authManager.deleteAccount()
+        } catch {
+            deleteError = error.localizedDescription
+        }
+        isDeletingAccount = false
     }
 
     private func loadDetails() async {

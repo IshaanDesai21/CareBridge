@@ -261,6 +261,7 @@ async function initializeTables() {
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_name TEXT;
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_gender TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id INTEGER;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_id TEXT UNIQUE;
   `);
 
   // Organizations: an owner creates + names an org and gets a single join code.

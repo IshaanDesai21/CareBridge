@@ -1,13 +1,32 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import { randomBytes, createPublicKey } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { getDb } from '../database/db.js';
+import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'carebridge-dev-secret';
+
+// Sign in with Apple: identity tokens are verified against Apple's public keys.
+// The audience must match the iOS app's bundle identifier.
+const APPLE_BUNDLE_ID = process.env.APPLE_BUNDLE_ID || 'com.ishaandesai.CareBridge';
+const APPLE_JWKS_URL = 'https://appleid.apple.com/auth/keys';
+let appleKeysCache = { keys: null, fetchedAt: 0 };
+
+async function getAppleKey(kid) {
+  const ONE_HOUR = 60 * 60 * 1000;
+  if (!appleKeysCache.keys || Date.now() - appleKeysCache.fetchedAt > ONE_HOUR) {
+    const res = await fetch(APPLE_JWKS_URL);
+    if (!res.ok) throw new Error(`Apple JWKS fetch failed (${res.status})`);
+    appleKeysCache = { keys: (await res.json()).keys, fetchedAt: Date.now() };
+  }
+  const jwk = appleKeysCache.keys.find((k) => k.kid === kid);
+  if (!jwk) throw new Error('No matching Apple public key for token');
+  return createPublicKey({ key: jwk, format: 'jwk' });
+}
 
 // Both the web and iOS Google OAuth clients are accepted as valid
 // audiences, since Google issues a separate client ID per platform.
@@ -205,6 +224,108 @@ router.post('/google', async (req, res) => {
   } catch (error) {
     logger.error('Google sign-in error:', error);
     res.status(500).json({ error: 'Google sign-in failed' });
+  }
+});
+
+// Sign in / register with an Apple identity token (Sign in with Apple on iOS).
+// Apple only sends the user's name/email on the FIRST authorization, so the
+// client forwards them and we persist them at account creation.
+router.post('/apple', async (req, res) => {
+  try {
+    const { identityToken, role, joinCode, firstName, lastName } = req.body;
+    if (!identityToken) {
+      return res.status(400).json({ error: 'identityToken is required' });
+    }
+
+    let payload;
+    try {
+      const decoded = jwt.decode(identityToken, { complete: true });
+      if (!decoded?.header?.kid) throw new Error('Malformed token');
+      const publicKey = await getAppleKey(decoded.header.kid);
+      payload = jwt.verify(identityToken, publicKey, {
+        algorithms: ['RS256'],
+        issuer: 'https://appleid.apple.com',
+        audience: APPLE_BUNDLE_ID
+      });
+    } catch (verifyError) {
+      logger.error('Apple token verification failed:', verifyError.message);
+      return res.status(401).json({ error: 'Invalid Apple token' });
+    }
+
+    const appleId = payload.sub;
+    const email = payload.email || null;
+
+    const db = getDb();
+    let user = await db.prepare('SELECT * FROM users WHERE apple_id = ?').get(appleId);
+    if (!user && email) {
+      user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    }
+
+    let patientJoinCode = null;
+    if (!user) {
+      if (!email) {
+        // No stored account for this Apple ID and Apple didn't share an email
+        // (only sent on first-ever authorization) — can't create an account.
+        return res.status(400).json({ error: 'Apple did not provide an email. Remove CareBridge from Settings → Apple ID → Sign-In & Security → Sign in with Apple, then try again.' });
+      }
+      const chosenRole = ['patient', 'caregiver', 'family', 'organization'].includes(role) ? role : 'patient';
+
+      let familyPatientId = null;
+      if (chosenRole === 'family' && joinCode) {
+        const codeRecord = await db.prepare('SELECT * FROM join_codes WHERE code = ?').get(joinCode.toUpperCase().trim());
+        if (codeRecord) familyPatientId = codeRecord.patient_id;
+      }
+
+      const inserted = await db.prepare(
+        'INSERT INTO users (email, apple_id, role, first_name, last_name) VALUES (?, ?, ?, ?, ?)'
+      ).run(email, appleId, chosenRole, firstName ?? null, lastName ?? null);
+      const userId = inserted.lastInsertRowid;
+
+      if (chosenRole === 'patient') {
+        patientJoinCode = await createPatientRecord(db, userId);
+      }
+      if (familyPatientId) {
+        await db.prepare('INSERT OR IGNORE INTO family_patient_links (family_user_id, patient_id) VALUES (?, ?)').run(userId, familyPatientId);
+      }
+
+      user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    } else if (!user.apple_id) {
+      // Existing account signing in with Apple for the first time — link it.
+      await db.prepare('UPDATE users SET apple_id = ? WHERE id = ?').run(appleId, user.id);
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        ...(patientJoinCode ? { join_code: patientJoinCode } : {})
+      },
+      token: signToken(user)
+    });
+  } catch (error) {
+    logger.error('Apple sign-in error:', error);
+    res.status(500).json({ error: 'Apple sign-in failed' });
+  }
+});
+
+// Delete the authenticated user's account and all associated data.
+// Required by App Store Review Guideline 5.1.1(v) — apps that support account
+// creation must also let people delete their account from within the app.
+// users → patients cascades wipe check-ins, medications, notes, join codes,
+// alerts, family links, chat history, and notifications.
+router.delete('/account', authenticateToken, async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
+    logger.info(`Account deleted: user ${req.user.id}`);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Account deletion error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 

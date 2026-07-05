@@ -10,7 +10,7 @@
 
 	import {
 		getPatients, submitWellnessCheckin, getWellnessHistory, getCareNotes,
-		createCareNote, getMedications, createMedication, getAiInsights,
+		createCareNote, getMedications, createMedication, deleteMedication, getAiInsights,
 		getLinkedPatient, familyLink, getPatientJoinCode, getPatientDetails,
 		getAiOverview, getAlerts, acknowledgeAlert,
 		getMyOrganization, createOrganization, joinOrganization
@@ -142,7 +142,17 @@
 	let patientDetails = null;
 	let aiOverview = null;
 	let generatingOverview = false;
-	let expandedPatientId = null;
+
+	const PATIENT_TABS = [
+		{ id: 'overview', label: 'Overview' },
+		{ id: 'ai_overview', label: 'AI Overview' },
+		{ id: 'checkin', label: 'Wellness Check-in' },
+		{ id: 'meds', label: 'Medications' },
+		{ id: 'notes', label: 'Care Notes' },
+		{ id: 'insights', label: 'AI Insights' },
+		{ id: 'physical', label: 'Physical Details' },
+		{ id: 'family', label: 'Family' }
+	];
 
 	let linkedPatient = null;
 	let familyLinked = false;
@@ -280,7 +290,6 @@
 
 	async function selectPatient(patient) {
 		selectedPatient = patient;
-		expandedPatientId = patient.id;
 		activeTab = 'overview';
 		patientJoinCode = null; patientDetails = null; aiOverview = null; caregiverMeds = [];
 
@@ -309,15 +318,6 @@
 	}
 
 	// ─── Handlers ─────────────────────────────────────────────────────────────
-	async function handlePatientToggle(patient) {
-		if (expandedPatientId === patient.id) {
-			expandedPatientId = null; selectedPatient = null; activeTab = 'all_patients';
-		} else {
-			expandedPatientId = patient.id;
-			await selectPatient(patient);
-		}
-	}
-
 	async function handleAcknowledge(alertId) {
 		if (DEMO_MODE) {
 			alerts = alerts.map(a => a.id === alertId ? { ...a, is_acknowledged: 1 } : a);
@@ -413,6 +413,25 @@
 			const m = await getMedications(selectedPatient.id);
 			caregiverMeds = m?.medications || m || [];
 		} catch (e) { addNotification(e.message, 'error'); } finally { submittingMed = false; }
+	}
+
+	let deletingMedId = null;
+	async function handleDeleteMedication(med) {
+		if (!confirm(`Remove ${med.name}? This cannot be undone.`)) return;
+		deletingMedId = med.id;
+		if (DEMO_MODE) {
+			await new Promise(r => setTimeout(r, 300));
+			caregiverMeds = caregiverMeds.filter(m => m.id !== med.id);
+			addNotification('Medication removed. (Demo)', 'success');
+			deletingMedId = null;
+			return;
+		}
+		try {
+			await deleteMedication(med.id);
+			caregiverMeds = caregiverMeds.filter(m => m.id !== med.id);
+			addNotification('Medication removed.', 'success');
+		} catch (e) { addNotification(e.message || 'Failed to remove medication', 'error'); }
+		finally { deletingMedId = null; }
 	}
 
 	async function handleFamilyLink() {
@@ -746,7 +765,7 @@
 			<nav class="sidebar-nav">
 				<button
 					class="nav-item {activeTab === 'all_patients' && !selectedPatient ? 'active' : ''}"
-					on:click={() => { selectedPatient = null; expandedPatientId = null; activeTab = 'all_patients'; }}
+					on:click={() => { selectedPatient = null; activeTab = 'all_patients'; }}
 					title={sidebarCollapsed ? 'All Patients' : undefined}
 				>
 					<span class="nav-icon">
@@ -762,40 +781,18 @@
 					<div class="section-label">Patients</div>
 					<div class="patient-list">
 						{#each patients as patient (patient.id)}
-							<div class="patient-accordion">
-								<button
-									class="patient-item {expandedPatientId === patient.id ? 'selected' : ''}"
-									on:click={() => handlePatientToggle(patient)}
-								>
-									<div class="patient-avatar-sm" style="background: {getScoreColor(patient.wellness_score)}">
-										{patient.first_name?.[0] || patient.email?.[0] || '?'}
-									</div>
-									<div class="patient-meta">
-										<span class="patient-name-sm">{patient.first_name} {patient.last_name || ''}</span>
-										<span class="patient-score-sm" style="color: {getScoreColor(patient.wellness_score)}">{patient.wellness_score || '—'}</span>
-									</div>
-									<svg class="patient-chevron {expandedPatientId === patient.id ? 'open' : ''}" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-								</button>
-								{#if expandedPatientId === patient.id}
-									<div class="patient-subnav">
-										{#each [
-											{ id: 'overview', label: 'Overview' },
-											{ id: 'ai_overview', label: 'AI Overview' },
-											{ id: 'checkin', label: 'Wellness Check-in' },
-											{ id: 'meds', label: 'Medications' },
-											{ id: 'notes', label: 'Care Notes' },
-											{ id: 'insights', label: 'AI Insights' },
-											{ id: 'physical', label: 'Physical Details' },
-											{ id: 'family', label: 'Family' }
-										] as sub}
-											<button
-												class="subnav-item {activeTab === sub.id ? 'active' : ''}"
-												on:click={() => activeTab = sub.id}
-											>{sub.label}</button>
-										{/each}
-									</div>
-								{/if}
-							</div>
+							<button
+								class="patient-item {selectedPatient?.id === patient.id ? 'selected' : ''}"
+								on:click={() => selectPatient(patient)}
+							>
+								<div class="patient-avatar-sm" style="background: {getScoreColor(patient.wellness_score)}">
+									{patient.first_name?.[0] || patient.email?.[0] || '?'}
+								</div>
+								<div class="patient-meta">
+									<span class="patient-name-sm">{patient.first_name} {patient.last_name || ''}</span>
+									<span class="patient-score-sm" style="color: {getScoreColor(patient.wellness_score)}">{patient.wellness_score || '—'}</span>
+								</div>
+							</button>
 						{/each}
 						{#if patients.length === 0}
 							<p class="no-patients">No patients yet</p>
@@ -858,6 +855,18 @@
 					</div>
 				{/if}
 			</header>
+
+			<!-- Patient section tabs -->
+			{#if selectedPatient && activeTab !== 'all_patients'}
+				<div class="patient-tabs">
+					{#each PATIENT_TABS as tab (tab.id)}
+						<button
+							class="patient-tab {activeTab === tab.id ? 'active' : ''}"
+							on:click={() => activeTab = tab.id}
+						>{tab.label}</button>
+					{/each}
+				</div>
+			{/if}
 
 			<!-- ── All Patients ── -->
 			{#if activeTab === 'all_patients'}
@@ -1143,6 +1152,19 @@
 									<span class="badge badge-{med.is_active ? 'success' : 'warning'}" style="flex-shrink: 0;">
 										{med.is_active ? 'Active' : 'Inactive'}
 									</span>
+									<button
+										class="med-remove-btn"
+										title="Remove medication"
+										aria-label="Remove {med.name}"
+										disabled={deletingMedId === med.id}
+										on:click={() => handleDeleteMedication(med)}
+									>
+										{#if deletingMedId === med.id}
+											<span class="mini-spinner"></span>
+										{:else}
+											<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+										{/if}
+									</button>
 								</div>
 							{/each}
 						</div>
@@ -2217,45 +2239,53 @@
 	.alert-msg { font-size: 13px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.alert-time { font-size: 11px; color: var(--text-light); white-space: nowrap; }
 
-	/* ─── Patient Accordion ─────────────────── */
-	.patient-accordion { display: flex; flex-direction: column; }
-
-	.patient-chevron {
-		flex-shrink: 0;
-		color: var(--text-light);
-		transition: transform 0.2s ease;
-	}
-
-	.patient-chevron.open { transform: rotate(180deg); }
-
-	.patient-subnav {
+	/* ─── Patient Section Tabs ──────────────── */
+	.patient-tabs {
 		display: flex;
-		flex-direction: column;
-		gap: 1px;
-		padding: 4px 0 4px 16px;
-		margin: 0 0 4px;
-		border-left: 2px solid var(--border);
-		margin-left: 20px;
+		gap: 4px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 4px;
+		margin-bottom: 24px;
+		overflow-x: auto;
 	}
 
-	.subnav-item {
-		display: block;
-		width: 100%;
-		text-align: left;
-		padding: 7px 10px;
+	.patient-tab {
+		flex: 1;
+		padding: 9px 14px;
 		border: none;
-		border-radius: 7px;
-		background: none;
+		border-radius: 9px;
 		font-size: 13px;
-		font-weight: 500;
-		color: var(--text-secondary);
+		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.15s;
+		background: transparent;
+		color: var(--text-secondary);
 		white-space: nowrap;
 	}
 
-	.subnav-item:hover { background: var(--bg); color: var(--text); }
-	.subnav-item.active { background: #dbeafe; color: var(--primary-dark); font-weight: 600; }
+	.patient-tab:hover { color: var(--text); }
+	.patient-tab.active { background: #dbeafe; color: var(--primary-dark); box-shadow: var(--shadow-sm); }
+
+	/* ─── Medication remove ─────────────────── */
+	.med-remove-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: none;
+		color: var(--text-light);
+		cursor: pointer;
+		flex-shrink: 0;
+		transition: all 0.15s;
+	}
+
+	.med-remove-btn:hover:not(:disabled) { background: #fee2e2; color: var(--danger); border-color: #fecaca; }
+	.med-remove-btn:disabled { opacity: 0.6; cursor: default; }
 
 	/* ─── AI Overview full page ─────────────── */
 	.ai-overview-meta { font-size: 12px; color: var(--text-light); margin-bottom: 16px; font-weight: 500; }

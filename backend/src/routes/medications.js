@@ -81,6 +81,19 @@ router.put('/:medicationId', async (req, res) => {
   }
 });
 
+// Delete medication (medication_logs rows cascade via ON DELETE CASCADE)
+router.delete('/:medicationId', async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.prepare('DELETE FROM medications WHERE id = ?').run(req.params.medicationId);
+    if (result.changes === 0) return res.status(404).json({ error: 'Medication not found' });
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Delete medication error:', error);
+    res.status(500).json({ error: 'Failed to delete medication' });
+  }
+});
+
 // Log medication taken
 router.post('/:medicationId/log', async (req, res) => {
   try {
