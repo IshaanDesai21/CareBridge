@@ -295,4 +295,8 @@ struct ScannedMedication: Codable {
     let frequency: String?
     let instructions: String?
     let confidence: String
+    let rxcui: Int?
+    let canonicalName: String?
+
+    var isValid: Bool { rxcui != nil }
 }
