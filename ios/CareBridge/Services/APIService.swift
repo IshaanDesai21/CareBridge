@@ -412,7 +412,7 @@ class APIService {
     func parseMedicationLabel(text: String, token: String) async throws -> ScannedMedication {
         if APIService.isDemoMode {
             try await Task.sleep(nanoseconds: 700_000_000)
-            return ScannedMedication(name: "Lisinopril", dosage: "10mg", frequency: "Once daily", instructions: "Take with food", confidence: "high")
+            return ScannedMedication(name: "Lisinopril", dosage: "10mg", frequency: "Once daily", instructions: "Take with food", confidence: "high", rxcui: 29046, canonicalName: "Lisinopril")
         }
         struct ParseRequest: Codable { let text: String }
         struct ParseResponse: Codable { let medication: ScannedMedication }

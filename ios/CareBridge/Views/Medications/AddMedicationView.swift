@@ -18,6 +18,7 @@ struct AddMedicationView: View {
     @State private var isParsingScan = false
     @State private var scanConfirmed = false
     @State private var scanCouldNotIdentify = false
+    @State private var validationWarning: String? = nil
 
     var onAdd: (() -> Void)?
 
@@ -42,6 +43,10 @@ struct AddMedicationView: View {
                     if scanConfirmed {
                         Label("Filled in automatically from scan — review before adding", systemImage: "checkmark.seal.fill")
                             .font(.caption).foregroundStyle(Color.cbGreen)
+                    }
+                    if let warning = validationWarning {
+                        Label(warning, systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.orange)
                     }
                     if scanCouldNotIdentify {
                         Label("Couldn't recognize a medication on that label. Try again or enter details manually.", systemImage: "exclamationmark.triangle.fill")
@@ -111,18 +116,27 @@ struct AddMedicationView: View {
         isParsingScan = true
         scanConfirmed = false
         scanCouldNotIdentify = false
+        validationWarning = nil
         do {
             let result = try await APIService.shared.parseMedicationLabel(text: scannedText, token: token)
-            if let scannedName = result.name, !scannedName.isEmpty {
-                name = scannedName
+            if result.isValid {
+                name = result.canonicalName ?? result.name ?? ""
                 if let d = result.dosage { dosage = d }
                 if let f = result.frequency { frequency = f }
                 if let i = result.instructions { instructions = i }
                 scanConfirmed = true
+                validationWarning = nil
                 accessibility.hapticNotification(.success)
+            } else if result.name != nil {
+                name = result.name ?? ""
+                if let d = result.dosage { dosage = d }
+                if let f = result.frequency { frequency = f }
+                scanConfirmed = true
+                validationWarning = "Medication not found in standard database — please verify before saving"
+                accessibility.hapticNotification(.warning)
             } else {
                 scanCouldNotIdentify = true
-                accessibility.hapticNotification(.warning)
+                accessibility.hapticNotification(.error)
             }
         } catch {
             scanCouldNotIdentify = true
