@@ -298,5 +298,5 @@ struct ScannedMedication: Codable {
     let rxcui: Int?
     let canonicalName: String?
 
-    var isValid: Bool { rxcui != nil }
+    var isValid: Bool { (rxcui ?? 0) > 0 }
 }
