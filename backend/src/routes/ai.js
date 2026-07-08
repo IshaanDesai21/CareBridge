@@ -2,6 +2,7 @@ import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
+import { getMedicationInfo } from '../services/rxnorm.js';
 
 const router = express.Router();
 router.use(authenticateToken);
