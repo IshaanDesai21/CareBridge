@@ -1,0 +1,12 @@
+[
+  {"id":"1","name":"Metformin","rxcui":6809,"imprint":"M523","shape":"round","color":"white"},
+  {"id":"2","name":"Lisinopril","rxcui":29046,"imprint":"L109","shape":"round","color":"white"},
+  {"id":"3","name":"Atorvastatin","rxcui":83367,"imprint":"C165","shape":"capsule","color":"blue"},
+  {"id":"4","name":"Amlodipine","rxcui":17767,"imprint":"A5","shape":"round","color":"white"},
+  {"id":"5","name":"Omeprazole","rxcui":7646,"imprint":"OME20","shape":"capsule","color":"purple"},
+  {"id":"6","name":"Levothyroxine","rxcui":10582,"imprint":"L50","shape":"round","color":"blue"},
+  {"id":"7","name":"Simvastatin","rxcui":36567,"imprint":"S20","shape":"oval","color":"tan"},
+  {"id":"8","name":"Losartan","rxcui":203160,"imprint":"LOS50","shape":"oval","color":"white"},
+  {"id":"9","name":"Metoprolol","rxcui":41493,"imprint":"M32","shape":"round","color":"white"},
+  {"id":"10","name":"Gabapentin","rxcui":25480,"imprint":"G300","shape":"capsule","color":"yellow"}
+]
