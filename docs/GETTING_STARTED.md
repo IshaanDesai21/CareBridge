@@ -116,3 +116,31 @@ PORT=3001
 **Everything is clean and working!** 🎉
 
 Run `npm install` and `npm run dev` to get started.
+
+## Medication Features
+
+CareBridge includes advanced medication management capabilities to reduce medication errors and improve patient safety:
+
+### Medication Bottle Scanner with RxNorm Validation
+
+Use the medication bottle scanner in AddMedicationView to photograph a prescription label. The app extracts the drug name, dosage, and frequency, then validates against the NLM RxNorm database. A green checkmark confirms the medication is recognized; an orange warning indicates the name was extracted but not found in RxNorm (allowing manual confirmation).
+
+**API Endpoints:**
+- `POST /api/ai/parse-medication` — Extract medication details from label photo (returns name, dosage, frequency, instructions, rxcui, and canonicalName)
+- `GET /api/ai/rxnorm/:name` — Validate drug name against NLM RxNorm database
+
+### Pill Photo Verification
+
+Caregivers can verify medications by photographing pills. The app uses on-device Vision OCR to detect imprints and matches them against a bundled pill index. Results show:
+- **Green (Match)** — Imprint matches the expected medication
+- **Orange (Mismatch)** — Imprint doesn't match; retake option available
+- **Retry (Unrecognized)** — Imprint not in index; retry capture
+
+**iOS Entry Point:** `PillVerificationView` in the medication management flow
+
+**API Endpoint:**
+- `POST /api/verification/verify/:medicationId` — Log verification events (match/mismatch) to verification_logs table
+
+### Privacy & HIPAA Compliance
+
+Pill images never leave the device. Only imprint text (extracted on-device via VisionKit OCR) is sent to the server for verification logging. Image data remains local.
