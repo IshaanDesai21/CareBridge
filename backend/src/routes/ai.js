@@ -308,13 +308,16 @@ Rules:
       return res.json({ medication: { name: null, dosage: null, frequency: null, instructions: null, confidence: 'none' } });
     }
 
+    const validated = await getMedicationInfo(parsed.name);
     res.json({
       medication: {
         name: parsed.name,
         dosage: parsed.dosage ?? null,
         frequency: parsed.frequency ?? null,
         instructions: parsed.instructions ?? null,
-        confidence: 'high'
+        confidence: 'high',
+        rxcui: validated ? validated.rxcui : null,
+        canonicalName: validated ? validated.name : null
       }
     });
   } catch (error) {
