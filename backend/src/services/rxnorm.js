@@ -18,6 +18,7 @@ export async function getMedicationInfo(drugName) {
     if (!rxcui) return null;
 
     const detailRes = await fetch(`${RXNAV_BASE}/rxcui/${rxcui}/properties.json`);
+    if (!detailRes.ok) return null;
     const detailData = await detailRes.json();
     return {
       rxcui: parseInt(rxcui, 10),
