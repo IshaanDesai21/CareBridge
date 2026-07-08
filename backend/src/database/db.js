@@ -155,6 +155,16 @@ async function initializeTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS verification_logs (
+      id SERIAL PRIMARY KEY,
+      medication_id INTEGER REFERENCES medications(id) ON DELETE CASCADE,
+      status TEXT CHECK (status IN ('match', 'mismatch')),
+      expected_name TEXT NOT NULL,
+      detected_pills TEXT NOT NULL,
+      verified_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS appointments (
       id SERIAL PRIMARY KEY,
       patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,

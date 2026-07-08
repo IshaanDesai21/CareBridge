@@ -67,8 +67,8 @@ class AddMedicationViewTests: XCTestCase {
     }
 
     func testZeroRxcuiIsConsideredValid() {
-        // rxcui of 0 is still non-nil, so isValid should be true
-        let result = ScannedMedication(
+        // rxcui of 0 is invalid (RxNorm IDs are positive integers)
+        let zeroMed = ScannedMedication(
             name: "Aspirin",
             dosage: "81mg",
             frequency: "daily",
@@ -77,6 +77,6 @@ class AddMedicationViewTests: XCTestCase {
             rxcui: 0,
             canonicalName: "Aspirin"
         )
-        XCTAssertTrue(result.isValid, "isValid should be true for any non-nil rxcui including 0")
+        XCTAssertFalse(zeroMed.isValid, "isValid should be false for rxcui=0")
     }
 }
