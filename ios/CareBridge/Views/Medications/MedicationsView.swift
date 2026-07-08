@@ -4,7 +4,9 @@ struct MedicationsView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @State private var medications: [Medication] = []
     @State private var isLoading = true
-    
+    @State private var patientId: Int? = nil
+    @State private var showVerification = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -23,17 +25,33 @@ struct MedicationsView: View {
                 }
             }
             .navigationTitle("Medications")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showVerification = true
+                    } label: {
+                        Label("Verify Pills", systemImage: "camera.viewfinder")
+                    }
+                    .disabled(medications.isEmpty || patientId == nil)
+                }
+            }
+            .sheet(isPresented: $showVerification) {
+                if let pid = patientId {
+                    PillVerificationView(patientId: pid, medications: medications)
+                }
+            }
             .task {
                 await loadMedications()
             }
         }
     }
-    
+
     private func loadMedications() async {
         guard let token = authManager.token else { return }
         isLoading = true
         do {
             let pid = try await APIService.shared.getMyPatient(token: token)
+            patientId = pid
             medications = try await APIService.shared.getMedications(patientId: pid, token: token)
         } catch {
             print("Failed to load medications: \(error)")
