@@ -41,6 +41,7 @@ final class SpeechManager: NSObject, ObservableObject {
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             errorMessage = "Couldn't access the microphone."
+            resetAudio()
             return
         }
 
@@ -50,16 +51,33 @@ final class SpeechManager: NSObject, ObservableObject {
 
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.removeTap(onBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-            self?.request?.append(buffer)
+
+        // AVAudioEngine raises an *Objective-C* exception (→ SIGABRT, uncatchable
+        // by Swift's do/catch) if the tap format is invalid. That happens when no
+        // real input route is available — the Simulator, another app holding the
+        // mic, or a mid-session route change — where the format comes back with a
+        // 0 sample rate / 0 channels. Guard against it, then still run the tap
+        // install + engine start through an Objective-C @try/@catch so any
+        // remaining framework exception surfaces as a handled error, never a crash.
+        guard recordingFormat.sampleRate > 0, recordingFormat.channelCount > 0 else {
+            errorMessage = "The microphone isn't available on this device right now."
+            resetAudio()
+            return
         }
 
-        audioEngine.prepare()
         do {
+            try ObjC.catchException { [weak self] in
+                guard let self else { return }
+                inputNode.removeTap(onBus: 0)
+                inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+                    self?.request?.append(buffer)
+                }
+                self.audioEngine.prepare()
+            }
             try audioEngine.start()
         } catch {
             errorMessage = "Couldn't start audio recording."
+            resetAudio()
             return
         }
 
@@ -76,15 +94,32 @@ final class SpeechManager: NSObject, ObservableObject {
         }
     }
 
+    /// Tears the audio graph back down to a clean state after any failed start,
+    /// so a later attempt doesn't inherit a half-configured engine (a stuck tap
+    /// or active session is itself a source of the next abort).
+    private func resetAudio() {
+        if audioEngine.isRunning { audioEngine.stop() }
+        try? ObjC.catchException {
+            self.audioEngine.inputNode.removeTap(onBus: 0)
+        }
+        request?.endAudio()
+        request = nil
+        task?.cancel()
+        task = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
     func stopRecording() {
         guard isRecording else { return }
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
+        isRecording = false
+        if audioEngine.isRunning { audioEngine.stop() }
+        try? ObjC.catchException {
+            self.audioEngine.inputNode.removeTap(onBus: 0)
+        }
         request?.endAudio()
         task?.cancel()
         task = nil
         request = nil
-        isRecording = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

@@ -10,10 +10,13 @@
 		16B3299C682E38B83E4590A9 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D42E72583C2D66B44EC37 /* JournalView.swift */; };
 		191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */; };
 		20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D4D3B99B4E0A59A16C657 /* RegisterView.swift */; };
+		306959CC017B6EC187BDC6FE /* NotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */; };
 		3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */; };
+		4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */; };
 		45E0085F93313B4110185AF7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE99782958AC4DDD1DC51580 /* Assets.xcassets */; };
 		4DDC698DC85F49807A0F0100 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F487A18D44FD7A9812F351 /* LoginView.swift */; };
 		7B87DCD08116FFAE19F16F6F /* MedicationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7682D16144CA3917B29CAAE6 /* MedicationsView.swift */; };
+		8AF9339E4C586D13E03E0A0D /* LiveNotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */; };
 		8C5F1245A52091659412DA47 /* CareBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */; };
 		92FAC51865430690327941DA /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627430257FF5185ECFB14044 /* HomeView.swift */; };
 		97C6846F378BE576C33DC62E /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5090FB142D8B4B144C2D0420 /* APIService.swift */; };
@@ -23,16 +26,15 @@
 		9EBE48FA2FF4799500701A91 /* CareBridgeWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9EBE49062FF4986900701A91 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AE99782958AC4DDD1DC51580 /* Assets.xcassets */; };
 		A96AEF6303344350DFC4AE80 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9BBA5E4000276DC9EA95A8D /* Models.swift */; };
+		B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CF2202915AC6C596833DEC /* MedicationScannerView.swift */; };
 		B9EED45D004D2B638E76D399 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639552A5B936CD1ECB04602 /* EmptyStateView.swift */; };
+		CB0000000000000000000006 /* ExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CB0000000000000000000002 /* ExceptionCatcher.m */; };
+		CB0000000000000000000007 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB0000000000000000000004 /* CrashReporter.swift */; };
 		DB339767017760FD227417C9 /* WellnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA829762EAE5922F423DDBE /* WellnessView.swift */; };
 		E8C4706738AAB307A3DAB5E4 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */; };
+		F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B8FD15412A91C92801C91E /* SpeechManager.swift */; };
 		F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601234567890A /* AddMedicationView.swift */; };
 		FE6407A2697AA59FE9A8409C /* AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8EA82736EF1345B727963B /* AccessibilityManager.swift */; };
-		306959CC017B6EC187BDC6FE /* NotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */; };
-		8AF9339E4C586D13E03E0A0D /* LiveNotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */; };
-		F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B8FD15412A91C92801C91E /* SpeechManager.swift */; };
-		4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */; };
-		B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CF2202915AC6C596833DEC /* MedicationScannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,29 +66,33 @@
 		1DA829762EAE5922F423DDBE /* WellnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessView.swift; sourceTree = "<group>"; };
 		1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		49CF2202915AC6C596833DEC /* MedicationScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationScannerView.swift; sourceTree = "<group>"; };
 		5090FB142D8B4B144C2D0420 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareBridgeApp.swift; sourceTree = "<group>"; };
 		5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		5D8EA82736EF1345B727963B /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityManager.swift; sourceTree = "<group>"; };
 		627430257FF5185ECFB14044 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNotificationsManager.swift; sourceTree = "<group>"; };
 		766D4D3B99B4E0A59A16C657 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		7682D16144CA3917B29CAAE6 /* MedicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsView.swift; sourceTree = "<group>"; };
+		9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		9CA4F64F1295E28C8F63AFF8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9EBE48E42FF4799200701A91 /* CareBridgeWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareBridgeWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		9EBE48E62FF4799200701A91 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		9EBE48E82FF4799300701A91 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A1B2C3D4E5F601234567890A /* AddMedicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationView.swift; sourceTree = "<group>"; };
 		A6F487A18D44FD7A9812F351 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		AE99782958AC4DDD1DC51580 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B9BBA5E4000276DC9EA95A8D /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessCheckinView.swift; sourceTree = "<group>"; };
+		CB0000000000000000000002 /* ExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExceptionCatcher.m; sourceTree = "<group>"; };
+		CB0000000000000000000003 /* ExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExceptionCatcher.h; sourceTree = "<group>"; };
+		CB0000000000000000000004 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
+		CB0000000000000000000005 /* CareBridge-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CareBridge-Bridging-Header.h"; sourceTree = "<group>"; };
+		D3B8FD15412A91C92801C91E /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
 		EF9D42E72583C2D66B44EC37 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		F639552A5B936CD1ECB04602 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F601234567890A /* AddMedicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationView.swift; sourceTree = "<group>"; };
-		5D8EA82736EF1345B727963B /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityManager.swift; sourceTree = "<group>"; };
 		FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsManager.swift; sourceTree = "<group>"; };
-		661285DB07EDDC5BD18814E9 /* LiveNotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNotificationsManager.swift; sourceTree = "<group>"; };
-		D3B8FD15412A91C92801C91E /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
-		9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
-		49CF2202915AC6C596833DEC /* MedicationScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -213,6 +219,14 @@
 			path = Medications;
 			sourceTree = "<group>";
 		};
+		7461A03E2727DCFCB31F7713 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
 		8480286FBBA93A33DAE026D6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -227,14 +241,6 @@
 				D7149BBA9C6BEC074540B3E6 /* Wellness */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		7461A03E2727DCFCB31F7713 /* Notifications */ = {
-			isa = PBXGroup;
-			children = (
-				9008EE72C570FF9A98E50BD3 /* NotificationsView.swift */,
-			);
-			path = Notifications;
 			sourceTree = "<group>";
 		};
 		8AEAEDCAD7560B24DDE24404 /* Models */ = {
@@ -263,6 +269,7 @@
 				3C1663E8B48B01531E898A01 /* Managers */,
 				8AEAEDCAD7560B24DDE24404 /* Models */,
 				FF215CB428B2649A3F90A8C9 /* Services */,
+				CB0000000000000000000001 /* Support */,
 				8480286FBBA93A33DAE026D6 /* Views */,
 			);
 			path = CareBridge;
@@ -274,6 +281,17 @@
 				12B6A71670D68B89C9A86C6C /* TabView.swift */,
 			);
 			path = Main;
+			sourceTree = "<group>";
+		};
+		CB0000000000000000000001 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				CB0000000000000000000003 /* ExceptionCatcher.h */,
+				CB0000000000000000000002 /* ExceptionCatcher.m */,
+				CB0000000000000000000005 /* CareBridge-Bridging-Header.h */,
+				CB0000000000000000000004 /* CrashReporter.swift */,
+			);
+			path = Support;
 			sourceTree = "<group>";
 		};
 		D7149BBA9C6BEC074540B3E6 /* Wellness */ = {
@@ -346,7 +364,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					9EBE48E32FF4799200701A91 = {
 						CreatedOnToolsVersion = 26.5;
@@ -418,6 +436,8 @@
 				F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */,
 				4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */,
 				B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */,
+				CB0000000000000000000006 /* ExceptionCatcher.m in Sources */,
+				CB0000000000000000000007 /* CrashReporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -445,15 +465,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CareBridge/CareBridge.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = V7ZVB4VR8J;
 				INFOPLIST_FILE = CareBridge/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge;
+				PRODUCT_BUNDLE_IDENTIFIER = group.carebridge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "CareBridge/Support/CareBridge-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -493,6 +514,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8K929UCYA2;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -514,6 +536,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -555,6 +578,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8K929UCYA2;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -569,6 +593,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -586,7 +611,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				DEVELOPMENT_TEAM = 8K929UCYA2;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -605,7 +630,7 @@
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge.CareBridgeWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = group.carebridge.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -629,7 +654,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V7ZVB4VR8J;
+				DEVELOPMENT_TEAM = 8K929UCYA2;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -644,7 +669,7 @@
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge.CareBridgeWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = group.carebridge.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -663,15 +688,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CareBridge/CareBridge.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = V7ZVB4VR8J;
 				INFOPLIST_FILE = CareBridge/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ishaandesai.CareBridge;
+				PRODUCT_BUNDLE_IDENTIFIER = group.carebridge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "CareBridge/Support/CareBridge-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

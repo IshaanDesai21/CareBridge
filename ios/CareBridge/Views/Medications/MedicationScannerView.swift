@@ -1,11 +1,25 @@
 import SwiftUI
 import VisionKit
 
-/// Live camera text scanner for medication labels. Recognizes text
-/// automatically as the camera holds steady on a label — no shutter button —
-/// and reports the combined transcript once it's held stable for a moment.
+/// Bridges a SwiftUI button tap into the live-updating UIKit coordinator below,
+/// since UIViewControllerRepresentable has no built-in way for its parent view
+/// to directly invoke a method on the coordinator it doesn't own a reference to.
+final class ScannerCaptureTrigger: ObservableObject {
+    fileprivate var captureAction: (() -> Void)?
+    /// True once at least one recognizable line of text is on screen, so the
+    /// capture button can tell the user when there's actually something to grab.
+    @Published var hasRecognizableText = false
+
+    func capture() { captureAction?() }
+}
+
+/// Live camera text scanner for medication labels. Recognizes text as the
+/// camera holds it in frame; the user explicitly taps "Capture" (driven by
+/// `ScannerCaptureTrigger`) to accept whatever is currently recognized rather
+/// than relying on an automatic stability heuristic.
 struct MedicationScannerView: UIViewControllerRepresentable {
     var onStableText: (String) -> Void
+    var trigger: ScannerCaptureTrigger
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let vc = DataScannerViewController(
@@ -18,6 +32,7 @@ struct MedicationScannerView: UIViewControllerRepresentable {
             isHighlightingEnabled: true
         )
         vc.delegate = context.coordinator
+        context.coordinator.trigger = trigger
         return vc
     }
 
@@ -36,8 +51,10 @@ struct MedicationScannerView: UIViewControllerRepresentable {
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let onStableText: (String) -> Void
         private var lastText = ""
-        private var stableFrameCount = 0
         private var hasFired = false
+        weak var trigger: ScannerCaptureTrigger? {
+            didSet { trigger?.captureAction = { [weak self] in self?.captureCurrentText() } }
+        }
 
         init(onStableText: @escaping (String) -> Void) {
             self.onStableText = onStableText
@@ -51,31 +68,28 @@ struct MedicationScannerView: UIViewControllerRepresentable {
                 return nil
             }.joined(separator: "\n")
 
-            // Require a reasonable amount of legible text before treating it as a candidate.
-            guard combined.count > 8 else {
-                stableFrameCount = 0
-                lastText = combined
-                return
+            lastText = combined
+            let ready = combined.count > 8
+            if trigger?.hasRecognizableText != ready {
+                DispatchQueue.main.async { self.trigger?.hasRecognizableText = ready }
             }
+        }
 
-            if combined == lastText {
-                stableFrameCount += 1
-            } else {
-                stableFrameCount = 0
-                lastText = combined
-            }
-
-            // The same text held across several consecutive frames means the
-            // camera is steady and the recognizer has locked on — auto-capture.
-            if stableFrameCount >= 6 {
-                hasFired = true
-                onStableText(combined)
-            }
+        /// Fires with whatever text is currently in frame, however much or little
+        /// that is — the user decided it's ready, not a stability heuristic.
+        func captureCurrentText() {
+            guard !hasFired else { return }
+            let text = lastText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return }
+            hasFired = true
+            onStableText(text)
         }
     }
 }
 
-/// Wraps the scanner with permission/availability handling and a status overlay.
+/// Wraps the scanner with permission/availability handling and a manual
+/// "Capture" button — the user reviews the label in frame and taps when ready,
+/// rather than the camera auto-firing once text looks stable.
 struct MedicationScannerScreen: View {
     var onCaptured: (String) -> Void
     var onCancel: () -> Void
@@ -83,6 +97,7 @@ struct MedicationScannerScreen: View {
     @State private var isSupported = DataScannerViewController.isSupported && DataScannerViewController.isAvailable
     @State private var cameraAuthorized = false
     @State private var checkedAuthorization = false
+    @StateObject private var captureTrigger = ScannerCaptureTrigger()
 
     var body: some View {
         ZStack {
@@ -91,10 +106,10 @@ struct MedicationScannerScreen: View {
             } else if checkedAuthorization && !cameraAuthorized {
                 deniedView
             } else if checkedAuthorization {
-                MedicationScannerView(onStableText: onCaptured)
+                MedicationScannerView(onStableText: onCaptured, trigger: captureTrigger)
                     .ignoresSafeArea()
                     .overlay(alignment: .top) {
-                        Text("Hold steady over the label…")
+                        Text(captureTrigger.hasRecognizableText ? "Text found — tap Capture when ready" : "Point the camera at the label…")
                             .font(.subheadline).fontWeight(.semibold)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -109,6 +124,25 @@ struct MedicationScannerScreen: View {
                                 .foregroundStyle(.white, .black.opacity(0.5))
                         }
                         .padding()
+                    }
+                    .overlay(alignment: .bottom) {
+                        Button {
+                            captureTrigger.capture()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "camera.fill")
+                                Text("Capture")
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 14)
+                            .background(captureTrigger.hasRecognizableText ? Color.cbPrimary : Color.gray)
+                            .clipShape(Capsule())
+                            .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
+                        }
+                        .disabled(!captureTrigger.hasRecognizableText)
+                        .padding(.bottom, 48)
                     }
             } else {
                 ProgressView().onAppear { checkAuthorization() }

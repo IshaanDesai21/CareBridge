@@ -111,6 +111,10 @@ struct CareBridgeApp: App {
     @AppStorage("hipaa_accepted") private var hipaaAccepted = false
 
     init() {
+        // Install crash diagnostics first, before anything else can fail, so any
+        // abort during launch is still captured with its reason + stack trace.
+        CrashReporter.install()
+
         let bgUIColor = UIColor(red: 248/255, green: 250/255, blue: 252/255, alpha: 1)
         UITableView.appearance().backgroundColor = bgUIColor
         UICollectionView.appearance().backgroundColor = bgUIColor
