@@ -264,6 +264,17 @@ class APIService {
         return response.medication
     }
     
+    func logVerification(medicationId: Int, status: String, pills: [[String: String]], token: String) async throws {
+        if APIService.isDemoMode { return }
+        struct VerifyRequest: Codable { let pills: [[String: String]] }
+        struct VerifyResponse: Codable { let verification: [String: String] }
+        let _: VerifyResponse = try await post(
+            endpoint: "/verification/verify/\(medicationId)",
+            body: VerifyRequest(pills: pills),
+            token: token
+        )
+    }
+
     // MARK: - Appointments
     
     func getAppointments(patientId: Int, token: String) async throws -> [Appointment] {

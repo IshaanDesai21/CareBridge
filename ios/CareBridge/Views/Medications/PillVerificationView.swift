@@ -4,6 +4,8 @@ import UIKit
 struct PillVerificationView: View {
     let patientId: Int
     let medications: [Medication]
+    @EnvironmentObject var authManager: AuthenticationManager
+    @Environment(\.dismiss) var dismiss
     @State private var capturedImage: UIImage? = nil
     @State private var isVerifying = false
     @State private var verificationResult: VerificationResult? = nil
@@ -31,7 +33,10 @@ struct PillVerificationView: View {
             .navigationTitle("Verify Pills")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showCamera = false }
+                    Button("Cancel") {
+                        showCamera = false
+                        dismiss()
+                    }
                 }
             }
         }
@@ -94,6 +99,25 @@ struct PillVerificationView: View {
         } else {
             verificationResult = .mismatch(unexpected: unexpected, expected: medications.map { $0.name })
         }
+
+        // Log verification result to backend audit trail (text only — no images leave device)
+        if let firstMed = medications.first, let token = authManager.token {
+            let status: String? = switch verificationResult {
+                case .match: "match"
+                case .mismatch: "mismatch"
+                case .unrecognized, .none: nil
+            }
+            if let status {
+                let pillsPayload = detected.map { ["name": $0.name, "imprint": $0.imprint] }
+                try? await APIService.shared.logVerification(
+                    medicationId: firstMed.id,
+                    status: status,
+                    pills: pillsPayload,
+                    token: token
+                )
+            }
+        }
+
         isVerifying = false
     }
 }
