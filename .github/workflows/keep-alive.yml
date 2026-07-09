@@ -1,0 +1,19 @@
+name: Keep Alive
+
+# Render's free tier spins a service down after ~15 min of inactivity, then
+# takes 30-60s to wake back up on the next request (see DEPLOYMENT.md). Pinging
+# both services well inside that window keeps them warm so a real visitor
+# never eats that delay.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health check
+        run: curl -fsS --max-time 60 https://api.carebridge.ftcblueprint.com/health || true
+      - name: Ping dashboard
+        run: curl -fsS --max-time 60 -o /dev/null https://carebridge.ftcblueprint.com/ || true
