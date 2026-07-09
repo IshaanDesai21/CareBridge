@@ -126,8 +126,7 @@ CareBridge includes advanced medication management capabilities to reduce medica
 Use the medication bottle scanner in AddMedicationView to photograph a prescription label. The app extracts the drug name, dosage, and frequency, then validates against the NLM RxNorm database. A green checkmark confirms the medication is recognized; an orange warning indicates the name was extracted but not found in RxNorm (allowing manual confirmation).
 
 **API Endpoints:**
-- `POST /api/ai/parse-medication` — Extract medication details from label photo (returns name, dosage, frequency, instructions, rxcui, and canonicalName)
-- `GET /api/ai/rxnorm/:name` — Validate drug name against NLM RxNorm database
+- `POST /api/ai/parse-medication` — Extract medication details from label text; returns name, dosage, frequency, instructions, rxcui, and canonicalName (RxNorm validation happens internally)
 
 ### Pill Photo Verification
 
