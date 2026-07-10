@@ -50,16 +50,10 @@ automatically on startup (see `backend/src/database/db.js`).
    these, you'll point DNS at them in step 4.
 5. Free-tier services spin down after ~15 min of inactivity and take 30-60s to
    wake back up on the next request. That's the tradeoff of "free" — normal
-   and expected, not a bug.
-6. Grab a **Deploy Hook URL** for each service (Settings → Deploy Hook) and
-   add them as GitHub repo secrets (Settings → Secrets and variables →
-   Actions):
-   - `RENDER_DEPLOY_HOOK_API`
-   - `RENDER_DEPLOY_HOOK_DASHBOARD`
-
-   (Render already auto-deploys on push on its own — the GitHub Action is
-   there so the deploy shows up in your Actions tab and so you have a place
-   to add tests/build gates before it fires.)
+   and expected, not a bug. A `.github/workflows/keep-alive.yml` workflow
+   pings both services every 10 minutes to prevent this.
+6. Render already auto-deploys on every push to `main` on its own
+   (`autoDeploy: true` in `render.yaml`) — nothing further to configure.
 
 ## 3. Google Cloud OAuth setup (walkthrough)
 
