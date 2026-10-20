@@ -3,7 +3,7 @@
 
 Run with:  .venv/bin/python -I build_catalog.py
 Reads data/manifest.csv (from fetch_c3pi.py), looks up each target NDC's
-conceptName on RxNav, and writes one row per imprint side. NDCs with no
+conceptName on RxNav, and writes one row per unambiguous normalized imprint (full imprint, plus sides >= 3 chars). NDCs with no
 conceptName / unparseable strength / drug mismatch are skipped and listed.
 """
 import collections
@@ -49,13 +49,18 @@ def parse(concept, drug):
     return f"{num} mg", form
 
 
+def norm(s):
+    return re.sub(r"[\s;]", "", s).upper()
+
+
 def main():
     per_ndc = collections.defaultdict(list)
     with open(MANIFEST, newline="") as f:
         for r in csv.DictReader(f):
             if r["class"] in TARGETS and r["imprint"].strip():
                 per_ndc[(r["ndc11"], r["class"])].append((r["imprint"].strip(), r["color"], r["shape"]))
-    catalog, skipped = [], []
+    skipped = []
+    cands = []  # (key, drug, strength, form, color, shape, ndc)
     for (ndc, drug), obs in sorted(per_ndc.items()):
         concept = concept_name(ndc)
         parsed = parse(concept, drug) if concept else None
@@ -64,19 +69,37 @@ def main():
             continue
         strength, form = parsed
         imprint, color, shape = collections.Counter(obs).most_common(1)[0][0]
-        seen = set()
-        for side in imprint.split(";"):
-            side = side.strip()
-            if not side or side.upper() in seen:
-                continue
-            seen.add(side.upper())
-            catalog.append(dict(imprint=side, drug=drug, strength=strength, form=form,
-                                color=color, shape=shape, ndc11=ndc))
+        keys = [norm(imprint)]  # full imprint, all sides in XML order
+        keys += [norm(side) for side in imprint.split(";") if len(norm(side)) >= 3]
+        for key in dict.fromkeys(k for k in keys if k):
+            cands.append((key, drug, strength, form, color, shape, ndc))
+    # drop every key that maps to more than one distinct (drug, strength)
+    owners = collections.defaultdict(set)
+    for key, drug, strength, *_ in cands:
+        owners[key].add((drug, strength))
+    ambiguous = {k: v for k, v in owners.items() if len(v) > 1}
+    catalog, seen = [], set()
+    for key, drug, strength, form, color, shape, ndc in cands:
+        if key in ambiguous or (key, drug, strength) in seen:
+            continue
+        seen.add((key, drug, strength))
+        catalog.append(dict(imprint=key, drug=drug, strength=strength, form=form,
+                            color=color, shape=shape, ndc11=ndc))
+    # build-time invariant: each key maps to exactly one (drug, strength)
+    check = collections.defaultdict(set)
+    for r in catalog:
+        check[r["imprint"]].add((r["drug"], r["strength"]))
+    bad = [k for k, v in check.items() if len(v) != 1]
+    if bad:
+        raise SystemExit(f"ambiguous imprint keys in catalog: {bad}")
     OUT.write_text(json.dumps(catalog, indent=2) + "\n")
     counts = collections.Counter(r["drug"] for r in catalog)
     print(f"wrote {len(catalog)} rows to {OUT}")
-    for d in TARGETS:
-        print(f"  {d}: {counts[d]} rows, {len({r['ndc11'] for r in catalog if r['drug'] == d})} NDCs")
+    for d_ in TARGETS:
+        print(f"  {d_}: {counts[d_]} rows, {len({r['ndc11'] for r in catalog if r['drug'] == d_})} NDCs")
+    print(f"dropped ambiguous keys ({len(ambiguous)}):")
+    for k, v in sorted(ambiguous.items()):
+        print(f"  {k}: {sorted(v)}")
     print(f"skipped NDCs ({len(skipped)}):")
     for ndc, drug, concept in skipped:
         print(f"  {ndc} [{drug}] conceptName={concept!r}")

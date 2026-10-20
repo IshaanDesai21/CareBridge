@@ -37,6 +37,7 @@ TARGETS = {
     "lisinopril": ["lisinopril", "zestril", "prinivil", "qbrelis"],
 }
 ALL_TARGET_WORDS = [w for ws in TARGETS.values() for w in ws]
+EXTRA_EXCLUDE = re.compile(r"caduet|zestoretic|prinzide|zonatuss|baridium|uristat|\bazo\b")
 COMBO_WORDS = ["hydrochlorothiazide", "hctz", "amlodipine", "clavulan"]
 PRIORITY_COLORS = ["WHITE", "PINK", "YELLOW", "PEACH"]
 PRIORITY_SHAPES = ["ROUND", "OVAL", "CAPSULE"]
@@ -80,7 +81,7 @@ def target_class(name):
 
 def mentions_target(name):
     n = clean_name(name).lower()
-    return any(w in n for w in ALL_TARGET_WORDS)
+    return any(w in n for w in ALL_TARGET_WORDS) or bool(EXTRA_EXCLUDE.search(n))
 
 
 def safe(s):
