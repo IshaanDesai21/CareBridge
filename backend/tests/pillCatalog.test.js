@@ -23,7 +23,7 @@ describe('pillCatalog.json', () => {
       expect(['benzonatate', 'phenazopyridine', 'atorvastatin', 'lisinopril']).toContain(r.drug);
       expect(r.strength).toMatch(/^\d+(\.\d+)? (mg|mcg|g)$/);
       expect(['tablet', 'capsule']).toContain(r.form);
-      expect(norm(r.imprint)).not.toBe('');
+      expect(norm(r.imprint).length).toBeGreaterThanOrEqual(3);
     }
   });
 });

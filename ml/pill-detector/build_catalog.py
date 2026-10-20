@@ -19,6 +19,7 @@ HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "data" / "manifest.csv"
 OUT = HERE / "pill_catalog.json"
 TARGETS = ["benzonatate", "phenazopyridine", "atorvastatin", "lisinopril"]
+MIN_KEY = 3
 RXNAV = "https://rxnav.nlm.nih.gov/REST/ndcstatus.json"
 
 
@@ -60,6 +61,7 @@ def main():
             if r["class"] in TARGETS and r["imprint"].strip():
                 per_ndc[(r["ndc11"], r["class"])].append((r["imprint"].strip(), r["color"], r["shape"]))
     skipped = []
+    owners = collections.defaultdict(set)
     cands = []  # (key, drug, strength, form, color, shape, ndc)
     for (ndc, drug), obs in sorted(per_ndc.items()):
         concept = concept_name(ndc)
@@ -69,14 +71,14 @@ def main():
             continue
         strength, form = parsed
         imprint, color, shape = collections.Counter(obs).most_common(1)[0][0]
-        keys = [norm(imprint)]  # full imprint, all sides in XML order
-        keys += [norm(side) for side in imprint.split(";") if len(norm(side)) >= 3]
-        for key in dict.fromkeys(k for k in keys if k):
+        full = norm(imprint)
+        sides = [norm(side) for side in imprint.split(";")]
+        # every candidate key of this product, of any length, counts for ambiguity
+        for key in dict.fromkeys(k for k in [full] + sides if k):
+            owners[key].add((drug, strength))
+        # but only keys of >= MIN_KEY chars are emitted
+        for key in dict.fromkeys(k for k in [full] + sides if len(k) >= MIN_KEY):
             cands.append((key, drug, strength, form, color, shape, ndc))
-    # drop every key that maps to more than one distinct (drug, strength)
-    owners = collections.defaultdict(set)
-    for key, drug, strength, *_ in cands:
-        owners[key].add((drug, strength))
     ambiguous = {k: v for k, v in owners.items() if len(v) > 1}
     catalog, seen = [], set()
     for key, drug, strength, form, color, shape, ndc in cands:
@@ -89,9 +91,9 @@ def main():
     check = collections.defaultdict(set)
     for r in catalog:
         check[r["imprint"]].add((r["drug"], r["strength"]))
-    bad = [k for k, v in check.items() if len(v) != 1]
+    bad = [k for k, v in check.items() if len(v) != 1 or len(k) < MIN_KEY]
     if bad:
-        raise SystemExit(f"ambiguous imprint keys in catalog: {bad}")
+        raise SystemExit(f"ambiguous or too-short imprint keys in catalog: {bad}")
     OUT.write_text(json.dumps(catalog, indent=2) + "\n")
     counts = collections.Counter(r["drug"] for r in catalog)
     print(f"wrote {len(catalog)} rows to {OUT}")

@@ -396,33 +396,6 @@
     "ndc11": "00378207701"
   },
   {
-    "imprint": "10",
-    "drug": "atorvastatin",
-    "strength": "10 mg",
-    "form": "tablet",
-    "color": "WHITE",
-    "shape": "OVAL",
-    "ndc11": "00378395005"
-  },
-  {
-    "imprint": "20",
-    "drug": "atorvastatin",
-    "strength": "20 mg",
-    "form": "tablet",
-    "color": "WHITE",
-    "shape": "OVAL",
-    "ndc11": "00378395105"
-  },
-  {
-    "imprint": "40",
-    "drug": "atorvastatin",
-    "strength": "40 mg",
-    "form": "tablet",
-    "color": "WHITE",
-    "shape": "OVAL",
-    "ndc11": "00378395205"
-  },
-  {
     "imprint": "PA83",
     "drug": "benzonatate",
     "strength": "200 mg",
@@ -963,15 +936,6 @@
     "ndc11": "63304083090"
   },
   {
-    "imprint": "W",
-    "drug": "lisinopril",
-    "strength": "2.5 mg",
-    "form": "tablet",
-    "color": "WHITE",
-    "shape": "ROUND",
-    "ndc11": "64679092701"
-  },
-  {
     "imprint": "W928",
     "drug": "lisinopril",
     "strength": "5 mg",
@@ -1035,24 +999,6 @@
     "ndc11": "65162052010"
   },
   {
-    "imprint": "A1",
-    "drug": "benzonatate",
-    "strength": "100 mg",
-    "form": "capsule",
-    "color": "YELLOW",
-    "shape": "OVAL",
-    "ndc11": "65162053610"
-  },
-  {
-    "imprint": "A2",
-    "drug": "benzonatate",
-    "strength": "200 mg",
-    "form": "capsule",
-    "color": "YELLOW",
-    "shape": "OVAL",
-    "ndc11": "65162053710"
-  },
-  {
     "imprint": "LUPIN25",
     "drug": "lisinopril",
     "strength": "2.5 mg",
@@ -1060,15 +1006,6 @@
     "color": "WHITE",
     "shape": "ROUND",
     "ndc11": "68180051202"
-  },
-  {
-    "imprint": "5",
-    "drug": "lisinopril",
-    "strength": "5 mg",
-    "form": "tablet",
-    "color": "PINK",
-    "shape": "ROUND",
-    "ndc11": "68180051303"
   },
   {
     "imprint": "LUPIN10",
