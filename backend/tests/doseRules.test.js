@@ -221,3 +221,81 @@ describe('resolvableFailureIds', () => {
     expect(resolvableFailureIds({ failures: [{ id: 9, created_at: ago(60), problems: [] }], passedMedicationIds: [], now })).toEqual([]);
   });
 });
+
+describe('fail-closed regressions', () => {
+  test('missing / NaN confidence -> unrecognized', () => {
+    for (const d of [{ label: 'lisinopril' }, { label: 'lisinopril', confidence: NaN }, { label: 'lisinopril', confidence: '0.9' }]) {
+      expect(codes(run({ detections: [d] }))).toEqual(['unrecognized']);
+    }
+  });
+  test('invalid threshold falls back to 0.6', () => {
+    for (const threshold of [NaN, 0, -1, 2, '0.1', Infinity]) {
+      expect(codes(run({ threshold, detections: [det('lisinopril', 0.3)] }))).toEqual(['unrecognized']);
+    }
+    expect(codes(run({ threshold: 0.2, detections: [det('lisinopril', 0.3)] }))).toEqual([]);
+  });
+  test('invalid env threshold falls back to 0.6', async () => {
+    const { vi } = await import('vitest');
+    for (const v of ['abc', '', '0', '5']) {
+      vi.resetModules();
+      process.env.PILL_CONFIDENCE_THRESHOLD = v;
+      const m = await import('../src/services/doseRules.js');
+      expect(m.CONFIDENCE_THRESHOLD).toBe(0.6);
+    }
+    vi.resetModules();
+    process.env.PILL_CONFIDENCE_THRESHOLD = '0.8';
+    expect((await import('../src/services/doseRules.js')).CONFIDENCE_THRESHOLD).toBe(0.8);
+    delete process.env.PILL_CONFIDENCE_THRESHOLD;
+  });
+  test('manual dose bad pillCount -> count_mismatch', () => {
+    for (const pillCount of [undefined, NaN, 1.5, 0, -1, '1']) {
+      const r = evaluateManualDose({ medication: B, pillCount, todayTotal: 0 });
+      expect(r.status).toBe('fail');
+      expect(r.problems[0].code).toBe('count_mismatch');
+      expect(r.problems[0].medicationId).toBe(2);
+      expect(r.problems[0].message).toBe(`Expected 1–2 Benzonatate, counted ${pillCount}.`);
+    }
+  });
+  test('bad todayTotal fails closed; string total coerced', () => {
+    for (const todayTotal of [NaN, -1, 'abc', Infinity]) {
+      const r = evaluateManualDose({ medication: B, pillCount: 1, todayTotal });
+      expect(r.status).toBe('fail');
+      expect(codes(r)).toEqual(['over_daily_max']);
+      expect(codes(run({ todayTotals: { 2: todayTotal }, detections: [det('benzonatate')] }))).toEqual(['over_daily_max']);
+    }
+    expect(evaluateManualDose({ medication: B, pillCount: 2, todayTotal: '5' }).problems[0].message)
+      .toBe('This would be 7 Benzonatate today — more than the daily maximum of 6.');
+    expect(evaluateManualDose({ medication: B, pillCount: 1, todayTotal: undefined }).status).toBe('pass');
+    expect(evaluateManualDose({ medication: B, pillCount: 1, todayTotal: '4' }).status).toBe('pass');
+    expect(codes(run({ todayTotals: { 2: '5' }, detections: [det('benzonatate'), det('benzonatate')] }))).toEqual(['over_daily_max']);
+  });
+  test('decimal strengths', () => {
+    expect(normalizeStrength('.5 mg')).toBe('0.5 mg');
+    expect(normalizeStrength('.5 mg')).toBe(normalizeStrength('0.5 mg'));
+    expect(normalizeStrength('0.50 mg')).toBe(normalizeStrength('.5 mg'));
+    expect(normalizeStrength('.5 mg')).not.toBe(normalizeStrength('5 mg'));
+    expect(normalizeStrength('2.5 mg')).not.toBe(normalizeStrength('5 mg'));
+    expect(normalizeStrength('2,5 mg')).toBe('2.5 mg');
+    expect(normalizeStrength('0,5 mg')).toBe('0.5 mg');
+    expect(normalizeStrength('1,000 mg')).toBe('1000 mg');
+    expect(normalizeStrength('10 mg')).toBe('10 mg');
+  });
+  test('0.5 mg catalog vs 5 mg med -> wrong_strength', () => {
+    const catalog = [{ imprint: 'Q1', drug: 'lisinopril', strength: '.5 mg', form: 'tablet' }];
+    const r = run({ catalog, medications: [{ ...L, strength: '5 mg' }, B], detections: [det('lisinopril', 0.9, 'q1')] });
+    expect(codes(r)).toEqual(['wrong_strength']);
+  });
+  test('null strengths are unverified, no wrong_strength', () => {
+    const catalog = [{ imprint: 'Q1', drug: 'lisinopril', strength: null, form: 'tablet' }];
+    let r = run({ catalog, medications: [{ ...L, strength: null }, B], detections: [det('lisinopril', 0.9, 'q1')] });
+    expect(r.status).toBe('pass');
+    expect(r.doses[0].strengthVerified).toBe(false);
+    r = run({ catalog, detections: [det('lisinopril', 0.9, 'q1')] });
+    expect(r.status).toBe('pass');
+    expect(r.doses[0].strengthVerified).toBe(false);
+    const cat2 = [{ imprint: 'Q1', drug: 'lisinopril', strength: '10 mg', form: 'tablet' }];
+    r = run({ catalog: cat2, medications: [{ ...L, strength: null }, B], detections: [det('lisinopril', 0.9, 'q1')] });
+    expect(r.status).toBe('pass');
+    expect(r.doses[0].strengthVerified).toBe(false);
+  });
+});

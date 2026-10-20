@@ -7,13 +7,23 @@ export const CLASS_FORM = {
   atorvastatin: 'tablet',
   lisinopril: 'tablet',
 };
-export const CONFIDENCE_THRESHOLD = Number(process.env.PILL_CONFIDENCE_THRESHOLD ?? 0.6);
+const DEFAULT_THRESHOLD = 0.6;
+const validThreshold = (t) => (typeof t === 'number' && Number.isFinite(t) && t > 0 && t <= 1 ? t : DEFAULT_THRESHOLD);
+const envThreshold = process.env.PILL_CONFIDENCE_THRESHOLD;
+export const CONFIDENCE_THRESHOLD = validThreshold(
+  envThreshold == null || envThreshold.trim() === '' ? NaN : Number(envThreshold),
+);
 export const CORRECTION_WINDOW_MS = 30 * 60 * 1000;
 
 export function normalizeStrength(s) {
   if (typeof s !== 'string') return null;
-  const m = s.toLowerCase().match(/(\d+(?:\.\d+)?)\s*(mcg|mg|g)\b/);
-  return m ? `${m[1]} ${m[2]}` : null;
+  const m = s.toLowerCase().match(/(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d*[.,]\d+|\d+)\s*(mcg|mg|g)\b/);
+  if (!m) return null;
+  let num = m[1];
+  if (/^\d{1,3}(?:,\d{3})+/.test(num) && !num.startsWith('0,')) num = num.replace(/,/g, '');
+  else num = num.replace(',', '.');
+  const n = parseFloat(num);
+  return Number.isFinite(n) ? `${n} ${m[2]}` : null;
 }
 
 export function drugClassFor(medicationName) {
@@ -56,8 +66,17 @@ function countProblems(med, count, todayTotal) {
       message: `Expected ${range} ${med.name}, counted ${count}.`,
     });
   }
-  const total = (todayTotal ?? 0) + count;
   const dailyMax = max * med.doses_per_day;
+  const already = todayTotal == null ? 0 : Number(todayTotal);
+  if (!Number.isFinite(already) || already < 0) {
+    problems.push({
+      code: 'over_daily_max',
+      medicationId: med.id,
+      message: `Can't confirm today's ${med.name} total, so this dose can't be checked against the daily maximum of ${dailyMax}.`,
+    });
+    return problems;
+  }
+  const total = already + count;
   if (total > dailyMax) {
     problems.push({
       code: 'over_daily_max',
@@ -69,7 +88,7 @@ function countProblems(med, count, todayTotal) {
 }
 
 export function evaluatePillCheck({ detections, medications, todayTotals, catalog, threshold }) {
-  const limit = threshold ?? CONFIDENCE_THRESHOLD;
+  const limit = threshold == null ? CONFIDENCE_THRESHOLD : validThreshold(threshold);
   const dets = detections ?? [];
   const meds = medications ?? [];
   const totals = todayTotals ?? {};
@@ -87,7 +106,7 @@ export function evaluatePillCheck({ detections, medications, todayTotals, catalo
   let unrecognized = 0;
   const groups = new Map();
   for (const d of dets) {
-    if (d.confidence < limit || d.label === 'other' || !TARGET_CLASSES.includes(d.label)) {
+    if (!(Number.isFinite(d.confidence) && d.confidence >= limit) || d.label === 'other' || !TARGET_CLASSES.includes(d.label)) {
       unrecognized += 1;
       continue;
     }
@@ -134,7 +153,13 @@ export function evaluatePillCheck({ detections, medications, todayTotals, catalo
         allMatched = false;
         continue;
       }
-      if (normalizeStrength(entry.strength) !== normalizeStrength(med.strength)) {
+      const detStrength = normalizeStrength(entry.strength);
+      const medStrength = normalizeStrength(med.strength);
+      if (detStrength === null || medStrength === null) {
+        allMatched = false;
+        continue;
+      }
+      if (detStrength !== medStrength) {
         allMatched = false;
         if (!wrongStrengths.has(entry.strength)) {
           wrongStrengths.add(entry.strength);
@@ -168,6 +193,21 @@ export function evaluatePillCheck({ detections, medications, todayTotals, catalo
 export function evaluateManualDose({ medication, pillCount, todayTotal }) {
   if (!dosingComplete(medication)) {
     return { status: 'fail', problems: [setupProblem(medication)] };
+  }
+  const min = medication.pills_per_dose_min;
+  const max = medication.pills_per_dose_max;
+  if (!isPosInt(pillCount)) {
+    const range = min === max ? `${min}` : `${min}–${max}`;
+    return {
+      status: 'fail',
+      problems: [{
+        code: 'count_mismatch',
+        medicationId: medication.id,
+        expected: min === max ? min : `${min}–${max}`,
+        counted: pillCount,
+        message: `Expected ${range} ${medication.name}, counted ${pillCount}.`,
+      }],
+    };
   }
   const problems = countProblems(medication, pillCount, todayTotal);
   return { status: problems.length ? 'fail' : 'pass', problems };
