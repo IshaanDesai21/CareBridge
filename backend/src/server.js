@@ -24,6 +24,8 @@ import familyRoutes from './routes/family.js';
 import alertRoutes from './routes/alerts.js';
 import organizationRoutes from './routes/organizations.js';
 import verificationRoutes from './routes/medicationVerification.js';
+import pillCheckRoutes from './routes/pillChecks.js';
+import doseLogRoutes from './routes/doseLogs.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -141,6 +143,8 @@ app.use('/api/family', familyRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/pill-checks', pillCheckRoutes);
+app.use('/api/dose-logs', doseLogRoutes);
 
 // WebSocket
 wss.on('error', (error) => {
