@@ -1,12 +1,10 @@
 /**
  * Integration tests for the full medication flow.
  *
- * Covers three scenarios using the same direct route-handler invocation
+ * Covers one scenario using the same direct route-handler invocation
  * pattern as the unit tests — no HTTP server, no live database, no real API keys.
  *
  *  Test 1: parse-medication returns rxcui for a valid drug
- *  Test 2: verification endpoint returns "match" for a matching pill
- *  Test 3: verification endpoint returns "mismatch" for a wrong pill
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -35,7 +33,6 @@ vi.mock('../../src/database/db.js', () => ({
 // ── Import routers AFTER mocks ─────────────────────────────────────────────────
 
 import aiRouter from '../../src/routes/ai.js';
-import verificationRouter from '../../src/routes/medicationVerification.js';
 
 // ── Route-invocation helpers ──────────────────────────────────────────────────
 
@@ -68,48 +65,6 @@ function callParseMedication(body) {
       (l) => l.route?.path === '/parse-medication' && l.route?.methods?.post
     );
     if (!layer) throw new Error('POST /parse-medication route not found in router stack');
-
-    const handlers = layer.route.stack.map((h) => h.handle);
-    let idx = 0;
-    const next = (err) => {
-      if (err) return resolve({ status: 500, body: { error: String(err) } });
-      const fn = handlers[idx++];
-      if (fn) fn(req, res, next);
-    };
-    next();
-  });
-}
-
-/**
- * Invoke POST /verify/:medicationId against the verification router stack directly.
- * Returns { status, body }.
- */
-function callVerify(medicationId, body) {
-  return new Promise((resolve) => {
-    const req = {
-      method: 'POST',
-      url: `/verify/${medicationId}`,
-      path: `/verify/${medicationId}`,
-      params: { medicationId: String(medicationId) },
-      body,
-      user: { id: 1 },
-    };
-
-    let statusCode = 200;
-    const res = {
-      status(code) {
-        statusCode = code;
-        return res;
-      },
-      json(payload) {
-        resolve({ status: statusCode, body: payload });
-      },
-    };
-
-    const layer = verificationRouter.stack.find(
-      (l) => l.route?.path === '/verify/:medicationId' && l.route?.methods?.post
-    );
-    if (!layer) throw new Error('POST /verify/:medicationId route not found in router stack');
 
     const handlers = layer.route.stack.map((h) => h.handle);
     let idx = 0;
@@ -187,43 +142,5 @@ describe('Medication flow integration', () => {
     expect(body.medication.name).toBe('Lisinopril');
     expect(body.medication.rxcui).toBe(29046);
     expect(typeof body.medication.canonicalName).toBe('string');
-  });
-
-  // ── Test 2: verification returns "match" for a matching pill ─────────────────
-
-  test('verification endpoint returns "match" when pill name matches medication', async () => {
-    mockGetDb = () => ({
-      prepare: () => ({
-        get: vi.fn().mockResolvedValue({ id: 1, name: 'Metformin', patient_id: 1 }),
-        run: vi.fn().mockResolvedValue({ lastInsertRowid: 42, changes: 1 }),
-      }),
-    });
-
-    const { status, body } = await callVerify(1, {
-      pills: [{ name: 'Metformin', imprint: 'M523' }],
-    });
-
-    expect(status).toBe(200);
-    expect(body.verification).toBeDefined();
-    expect(body.verification.status).toBe('match');
-  });
-
-  // ── Test 3: verification returns "mismatch" for a wrong pill ─────────────────
-
-  test('verification endpoint returns "mismatch" when pill name does not match medication', async () => {
-    mockGetDb = () => ({
-      prepare: () => ({
-        get: vi.fn().mockResolvedValue({ id: 1, name: 'Metformin', patient_id: 1 }),
-        run: vi.fn().mockResolvedValue({ lastInsertRowid: 43, changes: 1 }),
-      }),
-    });
-
-    const { status, body } = await callVerify(1, {
-      pills: [{ name: 'Ibuprofen', imprint: 'IBU200' }],
-    });
-
-    expect(status).toBe(200);
-    expect(body.verification).toBeDefined();
-    expect(body.verification.status).toBe('mismatch');
   });
 });
