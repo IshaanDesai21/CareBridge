@@ -161,6 +161,29 @@ describe('parse-medication RxNorm wiring', () => {
     expect(body.medication.name).toBe('Lisinopril');
   });
 
+  test('passes structured dosing fields through', async () => {
+    const llm = {
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({
+          name: 'Benzonatate', dosage: '100 mg', frequency: 'Three times daily as needed',
+          form: 'capsule', pillsPerDoseMin: 1, pillsPerDoseMax: 2, dosesPerDay: 3,
+          asNeeded: true, instructions: null, isMedication: true,
+        }), reasoning_content: null } }],
+      }),
+    };
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(llm)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ idGroup: { rxnormId: [] } }) }));
+
+    const { body } = await callParseMedication({ text: 'Benzonatate 100 mg' });
+    expect(body.medication.form).toBe('capsule');
+    expect(body.medication.pillsPerDoseMin).toBe(1);
+    expect(body.medication.pillsPerDoseMax).toBe(2);
+    expect(body.medication.dosesPerDay).toBe(3);
+    expect(body.medication.asNeeded).toBe(true);
+  });
+
   test('sets rxcui and canonicalName to null when getMedicationInfo returns null (drug not found)', async () => {
     vi.stubGlobal('fetch', buildFetchMock({ rxnavRxcui: null, rxnavName: null }));
 
