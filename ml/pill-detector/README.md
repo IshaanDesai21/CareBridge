@@ -19,11 +19,15 @@ phenazopyridine, atorvastatin, lisinopril (plus an `other` distractor class).
   `C3PI_Test` JPGs, and writes `data/manifest.csv`. At most 4 concurrent
   downloads, retry with backoff, existing files are skipped (resumable).
   Images are downscaled on download: SEG PNG to 8-bit RGBA, long side <= 768 px
-  (alpha = pill mask); Test JPG long side <= 1024 px, quality 90. Only the
+  (alpha = pill mask; it is anti-aliased by the resize, so threshold it, e.g. > 127, for a hard mask); Test JPG long side <= 1024 px, quality 90. Only the
   downscaled copies are kept.
 - `.venv/bin/python -I build_catalog.py`
   Looks up each target NDC on RxNav (`ndcstatus.json`), parses strength and form
   from `conceptName`, and writes `pill_catalog.json` (one row per imprint side).
+  Catalog keys are normalized imprints (uppercase, spaces and `;` removed): the
+  full imprint plus any single side of >= 3 characters. Any key that maps to more
+  than one (drug, strength) is dropped, so every catalog imprint identifies
+  exactly one drug and strength (asserted at build time and in a backend test).
   NDCs with no conceptName / no parseable strength / drug mismatch are skipped
   and listed. Copy the result to `backend/src/data/pillCatalog.json`.
 
