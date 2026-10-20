@@ -275,6 +275,17 @@ class APIService {
         )
     }
 
+    /// Look up a pill by imprint code using the NIH C3PI dataset (via RxImage API).
+    func lookupPill(imprint: String, token: String) async throws -> Pill? {
+        if APIService.isDemoMode { return nil }
+        struct PillResponse: Codable { let pill: Pill }
+        guard let encoded = imprint.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            return nil
+        }
+        let response: PillResponse = try await get(endpoint: "/medications/pill-lookup?imprint=\(encoded)", token: token)
+        return response.pill
+    }
+
     // MARK: - Appointments
     
     func getAppointments(patientId: Int, token: String) async throws -> [Appointment] {
