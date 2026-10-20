@@ -272,6 +272,12 @@ async function initializeTables() {
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_gender TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id INTEGER;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_id TEXT UNIQUE;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS form TEXT;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS strength TEXT;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS pills_per_dose_min INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS pills_per_dose_max INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS doses_per_day INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS as_needed INTEGER DEFAULT 0;
   `);
 
   // Organizations: an owner creates + names an org and gets a single join code.

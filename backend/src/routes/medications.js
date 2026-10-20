@@ -36,18 +36,26 @@ router.post('/', async (req, res) => {
   try {
     const {
       patientId, name, dosage, frequency, instructions,
-      startDate, endDate, pharmacyName, pharmacyPhone
+      startDate, endDate, pharmacyName, pharmacyPhone,
+      form, strength, pillsPerDoseMin, pillsPerDoseMax, dosesPerDay, asNeeded
     } = req.body;
+
+    // If only one end of the pills-per-dose range is given, use it for both.
+    const minPills = pillsPerDoseMin ?? pillsPerDoseMax ?? null;
+    const maxPills = pillsPerDoseMax ?? pillsPerDoseMin ?? null;
 
     const db = getDb();
     const result = await db.prepare(`
       INSERT INTO medications (
         patient_id, name, dosage, frequency, instructions,
-        start_date, end_date, pharmacy_name, pharmacy_phone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        start_date, end_date, pharmacy_name, pharmacy_phone,
+        form, strength, pills_per_dose_min, pills_per_dose_max, doses_per_day, as_needed
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       patientId, name, dosage ?? null, frequency ?? null, instructions ?? null,
-      startDate ?? null, endDate ?? null, pharmacyName ?? null, pharmacyPhone ?? null
+      startDate ?? null, endDate ?? null, pharmacyName ?? null, pharmacyPhone ?? null,
+      form ?? null, strength ?? dosage ?? null, minPills, maxPills,
+      dosesPerDay ?? null, asNeeded ? 1 : 0
     );
 
     const medication = await db.prepare('SELECT * FROM medications WHERE id = ?').get(result.lastInsertRowid);
@@ -61,7 +69,8 @@ router.post('/', async (req, res) => {
 // Update medication
 router.put('/:medicationId', async (req, res) => {
   try {
-    const { name, dosage, frequency, instructions, endDate, pharmacyName, pharmacyPhone, isActive } = req.body;
+    const { name, dosage, frequency, instructions, endDate, pharmacyName, pharmacyPhone, isActive,
+      form, strength, pillsPerDoseMin, pillsPerDoseMax, dosesPerDay, asNeeded } = req.body;
 
     const db = getDb();
     await db.prepare(`
@@ -74,12 +83,20 @@ router.put('/:medicationId', async (req, res) => {
         pharmacy_name = COALESCE(?, pharmacy_name),
         pharmacy_phone = COALESCE(?, pharmacy_phone),
         is_active = COALESCE(?, is_active),
+        form = COALESCE(?, form),
+        strength = COALESCE(?, strength),
+        pills_per_dose_min = COALESCE(?, pills_per_dose_min),
+        pills_per_dose_max = COALESCE(?, pills_per_dose_max),
+        doses_per_day = COALESCE(?, doses_per_day),
+        as_needed = COALESCE(?, as_needed),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(
       name ?? null, dosage ?? null, frequency ?? null, instructions ?? null,
       endDate ?? null, pharmacyName ?? null, pharmacyPhone ?? null,
       isActive !== undefined ? (isActive ? 1 : 0) : null,
+      form ?? null, strength ?? null, pillsPerDoseMin ?? null, pillsPerDoseMax ?? null,
+      dosesPerDay ?? null, asNeeded !== undefined ? (asNeeded ? 1 : 0) : null,
       req.params.medicationId
     );
 
