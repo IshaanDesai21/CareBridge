@@ -14,14 +14,14 @@ export async function todayTotals(db, patientId, localDate) {
   return totals;
 }
 
-export async function recentUnresolvedFailures(db, patientId, nowMs = Date.now()) {
+export async function recentUnresolvedFailures(db, patientId, source, nowMs = Date.now()) {
   const rows = await db.prepare(`
     SELECT id, problems, EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - created_at)) * 1000 AS age_ms
     FROM pill_checks
-    WHERE patient_id = ? AND status = 'fail' AND resolved_by_check_id IS NULL
+    WHERE patient_id = ? AND source = ? AND status = 'fail' AND resolved_by_check_id IS NULL
       AND created_at > CURRENT_TIMESTAMP - INTERVAL '30 minutes'
     ORDER BY created_at DESC
-  `).all(patientId);
+  `).all(patientId, source);
   return rows.map((r) => {
     let problems;
     try {
@@ -60,7 +60,7 @@ export async function recordDoses(db, { patientId, checkId, source, loggedBy, lo
 export async function markResolved(db, ids, byId) {
   if (!ids.length) return;
   const placeholders = ids.map(() => '?').join(', ');
-  await db.prepare(`UPDATE pill_checks SET resolved_by_check_id = ? WHERE id IN (${placeholders})`).run(byId, ...ids);
+  await db.prepare(`UPDATE pill_checks SET resolved_by_check_id = ? WHERE resolved_by_check_id IS NULL AND id IN (${placeholders})`).run(byId, ...ids);
 }
 
 /**
@@ -77,7 +77,7 @@ export async function persistEvaluation(db, { patientId, user, source, evaluatio
     doses = evaluation.doses;
     await recordDoses(db, { patientId, checkId, source, loggedBy: user.id, localDate, doses });
     const nowMs = Date.now();
-    const failures = await recentUnresolvedFailures(db, patientId, nowMs);
+    const failures = await recentUnresolvedFailures(db, patientId, source, nowMs);
     const ids = resolvableFailureIds({
       failures,
       passedMedicationIds: doses.map((d) => d.medicationId),
@@ -102,11 +102,29 @@ export async function persistEvaluation(db, { patientId, user, source, evaluatio
 export const stripBoxes = (detections) =>
   detections.map((d) => ({ label: d.label, confidence: d.confidence, imprint: d.imprint }));
 
-const isPosInt = (n) => Number.isInteger(n) && n > 0;
+/** Returns an error string or null. */
+export function validateDetections(detections) {
+  if (!Array.isArray(detections) || detections.length > 50) {
+    return 'detections must be an array of at most 50 objects';
+  }
+  for (const d of detections) {
+    if (d === null || typeof d !== 'object' || Array.isArray(d)) return 'detections must be an array of objects';
+    if (typeof d.label !== 'string' || d.label.length > 32) return 'detection label must be a string of at most 32 characters';
+    if (d.imprint != null && (typeof d.imprint !== 'string' || d.imprint.length > 64)) {
+      return 'detection imprint must be a string of at most 64 characters';
+    }
+    if (d.confidence !== undefined && (typeof d.confidence !== 'number' || !Number.isFinite(d.confidence))) {
+      return 'detection confidence must be a number';
+    }
+  }
+  return null;
+}
+
+const isPosInt =(n) => Number.isInteger(n) && n > 0;
 
 /** Role and shape checks shared by both routes. Returns {status, error} or null. */
 export async function guardDoseRequest(db, user, { patientId, localDate }) {
-  if (user?.role !== 'caregiver') return { status: 403, error: 'Only caregivers can log doses' };
+  if (!['caregiver', 'organization'].includes(user?.role)) return { status: 403, error: 'Only caregivers can log doses' };
   if (!isPosInt(patientId)) return { status: 400, error: 'patientId must be a positive integer' };
   if (typeof localDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
     return { status: 400, error: 'localDate must be YYYY-MM-DD' };
