@@ -27,6 +27,7 @@ ALPHA_T = 127
 TARGET_CLASSES = ["benzonatate", "phenazopyridine", "atorvastatin", "lisinopril"]
 SEG_LAYOUT = "MC_C3PI_REFERENCE_SEG_V1.6"
 HERE = Path(__file__).resolve().parent
+SCALE_MAX = 0.22  # max pill long side as a fraction of image width
 P_OTHER = 0.35  # per-pill chance of a distractor (then clamped by the >=30% target rule)
 
 
@@ -164,7 +165,7 @@ def prepare_pill(rng, src):
     src = strip_label(src.convert("RGBA"))
     bb = _alpha_bbox(src, ALPHA_T)
     src = src.crop(bb)
-    long_side = rng.uniform(0.08, 0.22) * IMG_W
+    long_side = rng.uniform(0.08, SCALE_MAX) * IMG_W
     s = long_side / max(src.size)
     src = src.resize((max(1, round(src.width * s)), max(1, round(src.height * s))), Image.LANCZOS)
     src = src.rotate(rng.uniform(0, 360), resample=Image.BICUBIC, expand=True)
@@ -269,7 +270,11 @@ def _init(g):
 
 
 def _work(job):
+    global P_OTHER, SCALE_MAX
     split, idx = job
+    # optional train-only overrides (val keeps the defaults so it stays comparable)
+    P_OTHER = _G["train_p_other"] if split == "train" else 0.35
+    SCALE_MAX = _G["train_scale_max"] if split == "train" else 0.22
     rng = random.Random(f"{_G['seed']}-{split}-{idx}")
     img, anns = compose_image(rng, _G["pools"][split], TARGET_CLASSES, _G["bgs"])
     name = f"{idx + 1:04d}.jpg"
@@ -293,6 +298,8 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--count", "--train-count", dest="train_count", type=int, default=6000)
     ap.add_argument("--val-count", type=int, default=800)
+    ap.add_argument("--train-p-other", type=float, default=0.35)
+    ap.add_argument("--train-scale-max", type=float, default=0.22)
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args()
 
@@ -304,7 +311,7 @@ def main():
     bgs = sorted(p for p in a.bg_dir.glob("*") if p.suffix.lower() in (".jpg", ".jpeg", ".png")) \
         if a.bg_dir.is_dir() else []
     out = a.data_dir / "composites"
-    g = dict(seed=a.seed, out=out, bgs=bgs, pools={
+    g = dict(train_p_other=a.train_p_other, train_scale_max=a.train_scale_max, seed=a.seed, out=out, bgs=bgs, pools={
         "train": build_pools(rows, train, a.data_dir), "val": build_pools(rows, hold, a.data_dir)})
 
     for split, n in (("train", a.train_count), ("val", a.val_count)):
