@@ -23,10 +23,11 @@ phenazopyridine, atorvastatin, lisinopril (plus an `other` distractor class).
   downscaled copies are kept.
 - `.venv/bin/python -I build_catalog.py`
   Looks up each target NDC on RxNav (`ndcstatus.json`), parses strength and form
-  from `conceptName`, and writes `pill_catalog.json` (one row per imprint side).
+  from `conceptName`, and writes `pill_catalog.json` (one row per unambiguous normalized imprint).
   Catalog keys are normalized imprints (uppercase, spaces and `;` removed): the
-  full imprint plus any single side of >= 3 characters. Any key that maps to more
-  than one (drug, strength) is dropped, so every catalog imprint identifies
+  full imprint plus any single side, only when >= 3 characters. Ambiguity is
+  checked against every key (full imprint and all sides, any length) of every
+  target product; any key mapping to more than one (drug, strength) is dropped, so every catalog imprint identifies
   exactly one drug and strength (asserted at build time and in a backend test).
   NDCs with no conceptName / no parseable strength / drug mismatch are skipped
   and listed. Copy the result to `backend/src/data/pillCatalog.json`.
