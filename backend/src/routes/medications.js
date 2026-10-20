@@ -2,9 +2,20 @@ import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
+import { lookupPillByImprint } from '../services/rximage.js';
 
 const router = express.Router();
 router.use(authenticateToken);
+
+// Look up a pill by imprint code using the NIH C3PI / RxImage dataset.
+// Used by the iOS pill verification scanner.
+router.get('/pill-lookup', async (req, res) => {
+  const { imprint } = req.query;
+  if (!imprint?.trim()) return res.status(400).json({ error: 'imprint query param required' });
+  const pill = await lookupPillByImprint(imprint.trim());
+  if (!pill) return res.status(404).json({ error: 'Pill not found in C3PI index' });
+  res.json({ pill });
+});
 
 // Get all medications for patient
 router.get('/:patientId', async (req, res) => {
