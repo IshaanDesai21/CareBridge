@@ -5,7 +5,7 @@ import logger from '../utils/logger.js';
 import catalog from '../data/pillCatalog.json' with { type: 'json' };
 import { evaluatePillCheck } from '../services/doseRules.js';
 import {
-  todayTotals, persistEvaluation, stripBoxes, guardDoseRequest, guardPatient,
+  todayTotals, persistEvaluation, stripBoxes, validateDetections, guardDoseRequest, guardPatient,
 } from '../services/doseStore.js';
 
 const router = express.Router();
@@ -16,8 +16,9 @@ router.post('/', async (req, res) => {
     const { patientId, localDate, detections } = req.body ?? {};
     const db = getDb();
     let err = await guardDoseRequest(db, req.user, { patientId, localDate });
-    if (!err && (!Array.isArray(detections) || detections.some((d) => d === null || typeof d !== 'object' || Array.isArray(d)))) {
-      err = { status: 400, error: 'detections must be an array of objects' };
+    if (!err) {
+      const detErr = validateDetections(detections);
+      if (detErr) err = { status: 400, error: detErr };
     }
     if (!err) err = await guardPatient(db, req.user, patientId);
     if (err) return res.status(err.status).json({ error: err.error });
