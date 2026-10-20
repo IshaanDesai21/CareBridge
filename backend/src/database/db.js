@@ -292,6 +292,38 @@ async function initializeTables() {
     );
   `);
 
+  // Pill checks (photo/manual verification attempts) and the dose logs they produce.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pill_checks (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      performed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      source TEXT CHECK (source IN ('photo', 'manual')),
+      status TEXT CHECK (status IN ('pass', 'fail')),
+      problems TEXT NOT NULL DEFAULT '[]',
+      detections TEXT NOT NULL DEFAULT '[]',
+      local_date TEXT NOT NULL,
+      resolved_by_check_id INTEGER REFERENCES pill_checks(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dose_logs (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      medication_id INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
+      pill_check_id INTEGER REFERENCES pill_checks(id) ON DELETE SET NULL,
+      source TEXT CHECK (source IN ('photo', 'manual')),
+      pill_count INTEGER NOT NULL,
+      strength_verified INTEGER DEFAULT 0,
+      logged_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      local_date TEXT NOT NULL,
+      given_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_dose_logs_patient_date ON dose_logs(patient_id, local_date);
+    CREATE INDEX IF NOT EXISTS idx_pill_checks_patient_status ON pill_checks(patient_id, status, created_at);
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
