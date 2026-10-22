@@ -324,6 +324,35 @@ async function initializeTables() {
     CREATE INDEX IF NOT EXISTS idx_pill_checks_patient_status ON pill_checks(patient_id, status, created_at);
   `);
 
+  // Calendar: patient/family notes and meals, keyed by the patient's local date.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS patient_notes (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      content TEXT NOT NULL,
+      local_date TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS meals (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      meal_type TEXT CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
+      description TEXT NOT NULL,
+      local_date TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    ALTER TABLE care_notes ADD COLUMN IF NOT EXISTS local_date TEXT;
+
+    CREATE INDEX IF NOT EXISTS idx_patient_notes_patient_date ON patient_notes(patient_id, local_date);
+    CREATE INDEX IF NOT EXISTS idx_meals_patient_date ON meals(patient_id, local_date);
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
