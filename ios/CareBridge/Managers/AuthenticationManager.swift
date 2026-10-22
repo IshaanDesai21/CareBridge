@@ -23,6 +23,13 @@ class AuthenticationManager: ObservableObject {
                 }
             }
         }
+        #if DEBUG
+        // Scripted simulator walkthroughs: `-demoRole <patient|caregiver|family>`.
+        if let role = UserDefaults.standard.string(forKey: "demoRole"),
+           ["patient", "caregiver", "family"].contains(role) {
+            loginAsDemo(role: role)
+        }
+        #endif
     }
 
     func login(email: String, password: String) async throws {
