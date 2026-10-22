@@ -360,7 +360,10 @@ class APIService {
     // MARK: - Patients list (for caregiver)
 
     func getPatients(token: String) async throws -> [Patient] {
-        if APIService.isDemoMode { return APIService.demoCaregiverPatients }
+        if APIService.isDemoMode {
+            // Family members only see their linked patient (mirrors GET /patients for family).
+            return APIService.demoUserRole == "family" ? [APIService.demoPatient] : APIService.demoCaregiverPatients
+        }
         struct PatientsResponse: Codable { let patients: [Patient] }
         let response: PatientsResponse = try await get(endpoint: "/patients", token: token)
         return response.patients
@@ -472,6 +475,106 @@ class APIService {
         struct Empty: Codable {}
         struct SuccessResponse: Codable { let success: Bool }
         let _: SuccessResponse = try await put(endpoint: "/alerts/notifications/\(id)/read", body: Empty(), token: token)
+    }
+
+    // MARK: - Calendar
+
+    /// Write routes answer with raw snake_case DB rows; callers re-fetch the
+    /// day instead, so the body is decoded into this and discarded.
+    private struct IgnoredResponse: Codable {}
+
+    /// `month` is "YYYY-MM".
+    func getCalendarMonth(patientId: Int, month: String, token: String) async throws -> CalendarMonth {
+        if APIService.isDemoMode { return DemoCalendarStore.shared.month(patientId: patientId, month: month) }
+        return try await get(endpoint: "/calendar/\(patientId)?month=\(month)", token: token)
+    }
+
+    /// `date` is "YYYY-MM-DD" (the patient's local date).
+    func getCalendarDay(patientId: Int, date: String, token: String) async throws -> CalendarDay {
+        if APIService.isDemoMode { return DemoCalendarStore.shared.day(patientId: patientId, date: date) }
+        struct DayResponse: Codable { let day: CalendarDay }
+        let response: DayResponse = try await get(endpoint: "/calendar/\(patientId)/day/\(date)", token: token)
+        return response.day
+    }
+
+    /// Patient-authored note (patient role only).
+    func addPatientNote(patientId: Int, content: String, localDate: String, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.addNote(patientId: patientId, kind: "patient", content: content, localDate: localDate)
+            return
+        }
+        struct Body: Codable { let patientId: Int; let content: String; let localDate: String }
+        let _: IgnoredResponse = try await post(endpoint: "/patient-notes",
+                                                body: Body(patientId: patientId, content: content, localDate: localDate),
+                                                token: token)
+    }
+
+    /// Caregiver/organization-authored care note.
+    func addCareNote(patientId: Int, content: String, localDate: String, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.addNote(patientId: patientId, kind: "caregiver", content: content, localDate: localDate)
+            return
+        }
+        struct Body: Codable { let patientId: Int; let content: String; let localDate: String }
+        let _: IgnoredResponse = try await post(endpoint: "/care-notes",
+                                                body: Body(patientId: patientId, content: content, localDate: localDate),
+                                                token: token)
+    }
+
+    /// `kind` is a `DayNote.kind`: "patient" → /patient-notes, "caregiver" → /care-notes.
+    func updateNote(kind: String, id: Int, content: String, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.updateNote(kind: kind, id: id, content: content)
+            return
+        }
+        struct Body: Codable { let content: String }
+        let _: IgnoredResponse = try await put(endpoint: "/\(APIService.notesPath(kind))/\(id)",
+                                               body: Body(content: content), token: token)
+    }
+
+    /// Only patient notes can be deleted; the backend has no DELETE for care notes.
+    func deleteNote(kind: String, id: Int, token: String) async throws {
+        guard kind != "caregiver" else { throw APIError.serverError("Caregiver notes cannot be deleted") }
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.deleteNote(kind: kind, id: id)
+            return
+        }
+        let _: IgnoredResponse = try await delete(endpoint: "/\(APIService.notesPath(kind))/\(id)", token: token)
+    }
+
+    /// `mealType` is one of `Meal.types`.
+    func addMeal(patientId: Int, mealType: String, description: String, localDate: String, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.addMeal(patientId: patientId, mealType: mealType, description: description, localDate: localDate)
+            return
+        }
+        struct Body: Codable { let patientId: Int; let mealType: String; let description: String; let localDate: String }
+        let _: IgnoredResponse = try await post(endpoint: "/meals",
+                                                body: Body(patientId: patientId, mealType: mealType,
+                                                           description: description, localDate: localDate),
+                                                token: token)
+    }
+
+    func updateMeal(id: Int, mealType: String, description: String, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.updateMeal(id: id, mealType: mealType, description: description)
+            return
+        }
+        struct Body: Codable { let mealType: String; let description: String }
+        let _: IgnoredResponse = try await put(endpoint: "/meals/\(id)",
+                                               body: Body(mealType: mealType, description: description), token: token)
+    }
+
+    func deleteMeal(id: Int, token: String) async throws {
+        if APIService.isDemoMode {
+            DemoCalendarStore.shared.deleteMeal(id: id)
+            return
+        }
+        let _: IgnoredResponse = try await delete(endpoint: "/meals/\(id)", token: token)
+    }
+
+    private static func notesPath(_ kind: String) -> String {
+        kind == "caregiver" ? "care-notes" : "patient-notes"
     }
 
     // MARK: - Generic Request Methods
@@ -696,11 +799,255 @@ extension APIService {
         ]
     }
 
+    /// Demo month summary (backed by `DemoCalendarStore`, so it reflects demo writes).
+    static func demoCalendarMonth(for month: String, patientId: Int = 1) -> CalendarMonth {
+        DemoCalendarStore.shared.month(patientId: patientId, month: month)
+    }
+
+    /// Demo day payload: today is full, three days ago carries an unresolved flag.
+    static func demoCalendarDay(date: String, patientId: Int = 1) -> CalendarDay {
+        DemoCalendarStore.shared.day(patientId: patientId, date: date)
+    }
+
     static var demoAlerts: [PatientAlert] {
         [
             PatientAlert(id: 1, patientName: "Alice Johnson",
                          message: "Patient would like to speak with their caregiver",
                          isUrgent: 0, isAcknowledged: 0, createdAt: demoDateStr(daysOffset: -1))
         ]
+    }
+}
+
+// MARK: - Demo calendar store
+
+/// In-memory, offline calendar data for demo mode. Days are generated lazily and
+/// deterministically, then cached so demo writes (meals/notes) persist until relaunch.
+final class DemoCalendarStore {
+    static let shared = DemoCalendarStore()
+
+    private var days: [String: CalendarDay] = [:]   // key: "patientId|yyyy-MM-dd"
+    private var nextId = 1000
+    private let lock = NSLock()
+
+    private struct DemoMed {
+        let id: Int, name: String, strength: String, dosesPerDay: Int, asNeeded: Bool
+    }
+    private let meds = [
+        DemoMed(id: 1, name: "Lisinopril", strength: "10 mg", dosesPerDay: 1, asNeeded: false),
+        DemoMed(id: 2, name: "Metformin", strength: "500 mg", dosesPerDay: 2, asNeeded: false),
+        DemoMed(id: 3, name: "Atorvastatin", strength: "20 mg", dosesPerDay: 1, asNeeded: false),
+        DemoMed(id: 4, name: "Acetaminophen", strength: "500 mg", dosesPerDay: 4, asNeeded: true),
+    ]
+
+    private var gregorian: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone.autoupdatingCurrent
+        return c
+    }
+
+    // MARK: Reads
+
+    /// Dots on ~70% of past days; the unresolved-flag day is three days ago.
+    func month(patientId: Int, month: String) -> CalendarMonth {
+        lock.lock(); defer { lock.unlock() }
+        let parts = month.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 2,
+              let first = gregorian.date(from: DateComponents(year: parts[0], month: parts[1], day: 1)),
+              let range = gregorian.range(of: .day, in: .month, for: first) else {
+            return CalendarMonth(month: month, days: [])
+        }
+        let summaries = range.map { d -> CalendarDaySummary in
+            let date = month + "-" + String(format: "%02d", d)
+            let day = cachedDay(patientId: patientId, date: date)
+            return CalendarDaySummary(date: date,
+                                      hasCheckin: day.checkin != nil,
+                                      hasDoses: !day.doses.isEmpty,
+                                      hasFlag: !day.flags.isEmpty,
+                                      hasEntries: !day.meals.isEmpty || !day.notes.isEmpty)
+        }
+        return CalendarMonth(month: month, days: summaries)
+    }
+
+    func day(patientId: Int, date: String) -> CalendarDay {
+        lock.lock(); defer { lock.unlock() }
+        return cachedDay(patientId: patientId, date: date)
+    }
+
+    // MARK: Writes
+
+    func addNote(patientId: Int, kind: String, content: String, localDate: String) {
+        lock.lock(); defer { lock.unlock() }
+        var day = cachedDay(patientId: patientId, date: localDate)
+        let user = APIService.demoUser(for: APIService.demoUserRole)
+        day.notes.append(DayNote(id: allocId(), kind: kind, content: content.trimmingCharacters(in: .whitespacesAndNewlines),
+                                 authorUserId: user.id, authorName: user.fullName,
+                                 createdAt: CalendarTimestamp.string(from: Date())))
+        store(day, patientId: patientId)
+    }
+
+    func updateNote(kind: String, id: Int, content: String) {
+        lock.lock(); defer { lock.unlock() }
+        mutateEach { day in
+            if let i = day.notes.firstIndex(where: { $0.kind == kind && $0.id == id }) {
+                day.notes[i].content = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+    }
+
+    func deleteNote(kind: String, id: Int) {
+        lock.lock(); defer { lock.unlock() }
+        mutateEach { day in day.notes.removeAll { $0.kind == kind && $0.id == id } }
+    }
+
+    func addMeal(patientId: Int, mealType: String, description: String, localDate: String) {
+        lock.lock(); defer { lock.unlock() }
+        var day = cachedDay(patientId: patientId, date: localDate)
+        let user = APIService.demoUser(for: APIService.demoUserRole)
+        day.meals.append(Meal(id: allocId(), mealType: mealType,
+                              description: description.trimmingCharacters(in: .whitespacesAndNewlines),
+                              authorUserId: user.id, authorName: user.fullName,
+                              createdAt: CalendarTimestamp.string(from: Date())))
+        store(day, patientId: patientId)
+    }
+
+    func updateMeal(id: Int, mealType: String, description: String) {
+        lock.lock(); defer { lock.unlock() }
+        mutateEach { day in
+            if let i = day.meals.firstIndex(where: { $0.id == id }) {
+                day.meals[i].mealType = mealType
+                day.meals[i].description = description.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+    }
+
+    func deleteMeal(id: Int) {
+        lock.lock(); defer { lock.unlock() }
+        mutateEach { day in day.meals.removeAll { $0.id == id } }
+    }
+
+    // MARK: Internals (call with lock held)
+
+    private func key(_ patientId: Int, _ date: String) -> String { "\(patientId)|\(date)" }
+
+    private func store(_ day: CalendarDay, patientId: Int) { days[key(patientId, day.date)] = day }
+
+    private func mutateEach(_ body: (inout CalendarDay) -> Void) {
+        for k in Array(days.keys) {
+            if var day = days[k] { body(&day); days[k] = day }
+        }
+    }
+
+    private func allocId() -> Int { nextId += 1; return nextId }
+
+    private func cachedDay(patientId: Int, date: String) -> CalendarDay {
+        if let day = days[key(patientId, date)] { return day }
+        let day = generate(date: date)
+        days[key(patientId, date)] = day
+        return day
+    }
+
+    private func timestamp(_ date: String, _ hour: Int, _ minute: Int) -> String? {
+        guard let midnight = Date.fromLocalDateString(date),
+              let d = gregorian.date(bySettingHour: hour, minute: minute, second: 0, of: midnight) else { return nil }
+        return CalendarTimestamp.string(from: d)
+    }
+
+    private func dose(_ medId: Int, _ date: String, _ h: Int, _ m: Int,
+                      source: String = "photo", verified: Bool = true) -> DayDose {
+        let med = meds.first { $0.id == medId } ?? meds[0]
+        return DayDose(id: allocId(), medicationId: med.id, name: med.name, strength: med.strength,
+                       pillCount: 1, source: source, strengthVerified: verified, givenAt: timestamp(date, h, m))
+    }
+
+    private func progress(for doses: [DayDose]) -> [MedicationProgress] {
+        meds.sorted { $0.name < $1.name }.map { med in
+            let given = doses.filter { $0.medicationId == med.id }.count
+            return MedicationProgress(
+                medicationId: med.id, name: med.name, strength: med.strength,
+                given: given, dosesPerDay: med.dosesPerDay, asNeeded: med.asNeeded,
+                label: med.asNeeded ? "\(given) doses given (max \(med.dosesPerDay))"
+                                    : "\(given) of \(med.dosesPerDay) doses")
+        }
+    }
+
+    private func checkin(_ date: String, mood: Int, energy: Int, pain: Int, sleep: Int, notes: String?) -> DayCheckin {
+        DayCheckin(energy: energy, fatigue: 10 - energy, pain: pain, mood: mood, sleepQuality: sleep,
+                   breathing: 9, mobility: 7, balance: 8, speechClarity: 9, appetite: 7, hydration: 6,
+                   swallowingDifficulty: 1, notes: notes, createdAt: timestamp(date, 8, 0))
+    }
+
+    private func generate(date: String) -> CalendarDay {
+        let empty = CalendarDay(date: date, checkin: nil, doses: [], progress: progress(for: []),
+                                flags: [], meals: [], notes: [])
+        let today = Date().localDateString
+        guard date <= today,
+              let dayDate = Date.fromLocalDateString(date),
+              let todayDate = Date.fromLocalDateString(today) else { return empty }
+        let offset = gregorian.dateComponents([.day], from: dayDate, to: todayDate).day ?? 0
+        let alice = APIService.demoUser(for: "patient")
+        let sarah = APIService.demoUser(for: "caregiver")
+
+        switch offset {
+        case 0:
+            let doses = [
+                dose(1, date, 8, 5),
+                dose(2, date, 8, 10, source: "manual", verified: false),
+                dose(4, date, 13, 30),
+            ]
+            return CalendarDay(
+                date: date,
+                checkin: checkin(date, mood: 8, energy: 7, pain: 2, sleep: 6,
+                                 notes: "Slept a bit restless but feeling good this morning."),
+                doses: doses, progress: progress(for: doses), flags: [],
+                meals: [
+                    Meal(id: allocId(), mealType: "breakfast", description: "Oatmeal with blueberries and tea",
+                         authorUserId: alice.id, authorName: alice.fullName, createdAt: timestamp(date, 8, 30)),
+                    Meal(id: allocId(), mealType: "lunch", description: "Turkey sandwich and vegetable soup",
+                         authorUserId: sarah.id, authorName: sarah.fullName, createdAt: timestamp(date, 12, 45)),
+                ],
+                notes: [
+                    DayNote(id: allocId(), kind: "patient",
+                            content: "Felt a little dizzy after standing up quickly; it passed after a minute.",
+                            authorUserId: alice.id, authorName: alice.fullName, createdAt: timestamp(date, 10, 15)),
+                    DayNote(id: allocId(), kind: "caregiver",
+                            content: "Walked 15 minutes in the garden. Steady on her feet; encouraged more water.",
+                            authorUserId: sarah.id, authorName: sarah.fullName, createdAt: timestamp(date, 14, 0)),
+                ])
+        case 3:
+            let doses = [dose(1, date, 8, 2), dose(2, date, 8, 6)]
+            return CalendarDay(
+                date: date,
+                checkin: checkin(date, mood: 6, energy: 5, pain: 3, sleep: 5, notes: nil),
+                doses: doses, progress: progress(for: doses),
+                flags: [DayFlag(id: allocId(), createdAt: timestamp(date, 8, 4), source: "photo",
+                                messages: ["Expected 1 pill but found 2.",
+                                           "One pill did not match Metformin 500 mg."])],
+                meals: [], notes: [])
+        default:
+            let parts = date.split(separator: "-").compactMap { Int($0) }
+            let seed = parts.count == 3 ? (parts[0] * 372 + parts[1] * 31 + parts[2]) * 7919 % 100 : 0
+            guard seed < 70 else { return empty }
+            var doses = [dose(1, date, 8, 0), dose(2, date, 8, 5)]
+            if seed % 2 == 0 { doses.append(dose(2, date, 19, 0)) }
+            if seed % 3 == 0 { doses.append(dose(3, date, 21, 30)) }
+            var day = CalendarDay(date: date, checkin: nil, doses: doses, progress: progress(for: doses),
+                                  flags: [], meals: [], notes: [])
+            if seed % 3 != 1 {
+                day.checkin = checkin(date, mood: 5 + seed % 5, energy: 4 + seed % 6, pain: 1 + seed % 4,
+                                      sleep: 5 + seed % 4, notes: nil)
+            }
+            if seed % 4 == 0 {
+                day.meals.append(Meal(id: allocId(), mealType: "dinner", description: "Baked salmon with rice",
+                                      authorUserId: alice.id, authorName: alice.fullName,
+                                      createdAt: timestamp(date, 18, 30)))
+            }
+            if seed % 5 == 0 {
+                day.notes.append(DayNote(id: allocId(), kind: "caregiver",
+                                         content: "Routine visit. Vitals stable.",
+                                         authorUserId: sarah.id, authorName: sarah.fullName,
+                                         createdAt: timestamp(date, 15, 0)))
+            }
+            return day
+        }
     }
 }

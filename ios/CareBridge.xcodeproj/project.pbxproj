@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		11C15915AF9B71E1592E55B4 /* Date+LocalDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5D8F91563CDB02E92D504D /* Date+LocalDate.swift */; };
+		583C5A4019C2FD04CA1B0126 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */; };
 		16B3299C682E38B83E4590A9 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D42E72583C2D66B44EC37 /* JournalView.swift */; };
 		191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */; };
 		20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 766D4D3B99B4E0A59A16C657 /* RegisterView.swift */; };
@@ -66,6 +68,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C5D8F91563CDB02E92D504D /* Date+LocalDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+LocalDate.swift"; sourceTree = "<group>"; };
+		6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarModels.swift"; sourceTree = "<group>"; };
 		12B6A71670D68B89C9A86C6C /* TabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabView.swift; sourceTree = "<group>"; };
 		1DA829762EAE5922F423DDBE /* WellnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessView.swift; sourceTree = "<group>"; };
 		1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -143,6 +147,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		07D852466CA0BD085B0AFB3B /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				4C5D8F91563CDB02E92D504D /* Date+LocalDate.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		065D2E0EF212D384DB1495F2 = {
 			isa = PBXGroup;
 			children = (
@@ -254,6 +266,7 @@
 		8AEAEDCAD7560B24DDE24404 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */,
 				B9BBA5E4000276DC9EA95A8D /* Models.swift */,
 				AA01B2C3D4E5F60123456701 /* Pill.swift */,
 				AA02B2C3D4E5F60123456701 /* PillDetection.swift */,
@@ -273,6 +286,7 @@
 		A6CEAE5BD35A2FF54962C485 /* CareBridge */ = {
 			isa = PBXGroup;
 			children = (
+				07D852466CA0BD085B0AFB3B /* Extensions */,
 				AE99782958AC4DDD1DC51580 /* Assets.xcassets */,
 				50F8AE367D7DF0DE9DA0E0E6 /* CareBridgeApp.swift */,
 				9CA4F64F1295E28C8F63AFF8 /* Info.plist */,
@@ -427,6 +441,8 @@
 				191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */,
 				20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */,
 				9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */,
+				11C15915AF9B71E1592E55B4 /* Date+LocalDate.swift in Sources */,
+				583C5A4019C2FD04CA1B0126 /* CalendarModels.swift in Sources */,
 				3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */,
 				DB339767017760FD227417C9 /* WellnessView.swift in Sources */,
 				F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */,
