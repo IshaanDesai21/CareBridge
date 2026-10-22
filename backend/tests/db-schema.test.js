@@ -17,6 +17,13 @@ describe('Database Schema', () => {
     expect(dbSource).toContain('verified_by INTEGER REFERENCES users(id)');
   });
 
+  test('calendar notes and meals tables are defined in db.js', () => {
+    const dbSource = fs.readFileSync(path.join(__dirname, '../src/database/db.js'), 'utf-8');
+    expect(dbSource).toContain('CREATE TABLE IF NOT EXISTS patient_notes');
+    expect(dbSource).toContain('CREATE TABLE IF NOT EXISTS meals');
+    expect(dbSource).toContain('care_notes ADD COLUMN IF NOT EXISTS local_date');
+  });
+
   test('db.js exports connectDatabase and getDb functions', async () => {
     const dbModule = await import('../src/database/db.js');
     expect(typeof dbModule.connectDatabase).toBe('function');
