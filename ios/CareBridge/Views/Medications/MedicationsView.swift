@@ -5,7 +5,6 @@ struct MedicationsView: View {
     @State private var medications: [Medication] = []
     @State private var isLoading = true
     @State private var patientId: Int? = nil
-    @State private var showVerification = false
 
     var body: some View {
         NavigationStack {
@@ -25,21 +24,6 @@ struct MedicationsView: View {
                 }
             }
             .navigationTitle("Medications")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showVerification = true
-                    } label: {
-                        Label("Verify Pills", systemImage: "camera.viewfinder")
-                    }
-                    .disabled(medications.isEmpty || patientId == nil)
-                }
-            }
-            .sheet(isPresented: $showVerification) {
-                if let pid = patientId {
-                    PillVerificationView(patientId: pid, medications: medications)
-                }
-            }
             .task {
                 await loadMedications()
             }

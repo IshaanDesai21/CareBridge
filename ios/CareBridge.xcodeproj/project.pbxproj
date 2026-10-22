@@ -43,11 +43,8 @@
 		F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B8FD15412A91C92801C91E /* SpeechManager.swift */; };
 		F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601234567890A /* AddMedicationView.swift */; };
 		FE6407A2697AA59FE9A8409C /* AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8EA82736EF1345B727963B /* AccessibilityManager.swift */; };
-		AA01B2C3D4E5F60123456702 /* Pill.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01B2C3D4E5F60123456701 /* Pill.swift */; };
 		AA02B2C3D4E5F60123456702 /* PillDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA02B2C3D4E5F60123456701 /* PillDetection.swift */; };
 		AA03B2C3D4E5F60123456702 /* PillDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03B2C3D4E5F60123456701 /* PillDetectionService.swift */; };
-		AA04B2C3D4E5F60123456702 /* PillImprintIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA04B2C3D4E5F60123456701 /* PillImprintIndex.swift */; };
-		AA05B2C3D4E5F60123456702 /* PillVerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA05B2C3D4E5F60123456701 /* PillVerificationView.swift */; };
 		AA06B2C3D4E5F60123456702 /* CameraCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA06B2C3D4E5F60123456701 /* CameraCaptureView.swift */; };
 /* End PBXBuildFile section */
 
@@ -113,11 +110,8 @@
 		EF9D42E72583C2D66B44EC37 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		F639552A5B936CD1ECB04602 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsManager.swift; sourceTree = "<group>"; };
-		AA01B2C3D4E5F60123456701 /* Pill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pill.swift; sourceTree = "<group>"; };
 		AA02B2C3D4E5F60123456701 /* PillDetection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillDetection.swift; sourceTree = "<group>"; };
 		AA03B2C3D4E5F60123456701 /* PillDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillDetectionService.swift; sourceTree = "<group>"; };
-		AA04B2C3D4E5F60123456701 /* PillImprintIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillImprintIndex.swift; sourceTree = "<group>"; };
-		AA05B2C3D4E5F60123456701 /* PillVerificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillVerificationView.swift; sourceTree = "<group>"; };
 		AA06B2C3D4E5F60123456701 /* CameraCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -273,7 +267,6 @@
 				7682D16144CA3917B29CAAE6 /* MedicationsView.swift */,
 				A1B2C3D4E5F601234567890A /* AddMedicationView.swift */,
 				49CF2202915AC6C596833DEC /* MedicationScannerView.swift */,
-				AA05B2C3D4E5F60123456701 /* PillVerificationView.swift */,
 			);
 			path = Medications;
 			sourceTree = "<group>";
@@ -309,7 +302,6 @@
 			children = (
 				6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */,
 				B9BBA5E4000276DC9EA95A8D /* Models.swift */,
-				AA01B2C3D4E5F60123456701 /* Pill.swift */,
 				AA02B2C3D4E5F60123456701 /* PillDetection.swift */,
 			);
 			path = Models;
@@ -360,7 +352,6 @@
 			children = (
 				5090FB142D8B4B144C2D0420 /* APIService.swift */,
 				AA03B2C3D4E5F60123456701 /* PillDetectionService.swift */,
-				AA04B2C3D4E5F60123456701 /* PillImprintIndex.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -500,11 +491,8 @@
 				F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */,
 				4326E00B3117E4EC5C03BD4B /* NotificationsView.swift in Sources */,
 				B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */,
-				AA01B2C3D4E5F60123456702 /* Pill.swift in Sources */,
 				AA02B2C3D4E5F60123456702 /* PillDetection.swift in Sources */,
 				AA03B2C3D4E5F60123456702 /* PillDetectionService.swift in Sources */,
-				AA04B2C3D4E5F60123456702 /* PillImprintIndex.swift in Sources */,
-				AA05B2C3D4E5F60123456702 /* PillVerificationView.swift in Sources */,
 				AA06B2C3D4E5F60123456702 /* CameraCaptureView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
