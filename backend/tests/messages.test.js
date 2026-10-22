@@ -111,8 +111,8 @@ describe('POST /:patientId', () => {
       content: 'm42', createdAt: '2026-10-19T10:00:00Z',
     });
     expect(sendToUser).toHaveBeenCalledTimes(2);
-    expect(sendToUser).toHaveBeenCalledWith(7, { type: 'family_message', message: r.body.message });
-    expect(sendToUser).toHaveBeenCalledWith(5, { type: 'family_message', message: r.body.message });
+    expect(sendToUser).toHaveBeenCalledWith(7, { type: 'family_message', patientId: 1, message: r.body.message });
+    expect(sendToUser).toHaveBeenCalledWith(5, { type: 'family_message', patientId: 1, message: r.body.message });
     expect(sendToUser.mock.calls.map((c) => c[0])).not.toContain(3);
   });
 });
@@ -156,6 +156,9 @@ describe('POST /:patientId/read', () => {
     expect(c.sql).toMatch(/ON CONFLICT \(user_id, patient_id\) DO UPDATE SET/);
     expect(c.sql).toMatch(/GREATEST\(family_message_reads\.last_read_message_id, EXCLUDED\.last_read_message_id\)/);
     expect(c.params).toEqual([3, 1, 17]);
+    // db.run appends "RETURNING id" unless the SQL already has RETURNING; this table has no id column.
+    expect(c.sql).toMatch(/RETURNING user_id/i);
+    expect(c.sql).not.toMatch(/RETURNING id/i);
   });
 
   test('invalid lastReadMessageId -> 400', async () => {
