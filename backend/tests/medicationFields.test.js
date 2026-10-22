@@ -19,9 +19,10 @@ import router from '../src/routes/medications.js';
 
 function makeDb() {
   return fakeDb([
+    [/SELECT organization_id FROM users/, { get: () => ({ organization_id: null }) }],
     [/INSERT INTO medications/, { run: () => ({ lastInsertRowid: 7 }) }],
     [/UPDATE medications/, { run: () => ({ changes: 1 }) }],
-    [/SELECT \* FROM medications/, { get: () => ({ id: 7 }) }],
+    [/SELECT \* FROM medications/, { get: () => ({ id: 7, patient_id: 1 }) }],
   ]);
 }
 
@@ -36,7 +37,7 @@ describe('structured medication fields', () => {
   test('POST stores form, strength, pills/dose range, doses/day, asNeeded', async () => {
     mockDb = makeDb();
     const { status } = await invokeRoute(router, 'post', '/', {
-      user: { id: 1 },
+      user: { id: 1, role: 'caregiver' },
       body: { patientId: 1, name: 'Benzonatate', dosage: '100 mg', form: 'capsule',
         pillsPerDoseMin: 1, pillsPerDoseMax: 2, dosesPerDay: 3, asNeeded: true },
     });
@@ -48,7 +49,7 @@ describe('structured medication fields', () => {
   test('POST with only max sets min and max to it', async () => {
     mockDb = makeDb();
     await invokeRoute(router, 'post', '/', {
-      user: { id: 1 },
+      user: { id: 1, role: 'caregiver' },
       body: { patientId: 1, name: 'X', dosage: '5 mg', pillsPerDoseMax: 2 },
     });
     const ins = mockDb.calls.find((c) => /INSERT INTO medications/.test(c.sql));
@@ -58,11 +59,11 @@ describe('structured medication fields', () => {
   test('PUT with dosesPerDay only passes null for the other new fields', async () => {
     mockDb = makeDb();
     await invokeRoute(router, 'put', '/:medicationId', {
-      user: { id: 1 }, params: { medicationId: '7' }, body: { dosesPerDay: 2 },
+      user: { id: 1, role: 'caregiver' }, params: { medicationId: '7' }, body: { dosesPerDay: 2 },
     });
     const upd = mockDb.calls.find((c) => /UPDATE medications/.test(c.sql));
     expect(upd.sql).toMatch(/doses_per_day = COALESCE/);
     // tail: form, strength, min, max, doses, as_needed, id
-    expect(upd.params.slice(-7)).toEqual([null, null, null, null, 2, null, '7']);
+    expect(upd.params.slice(-7)).toEqual([null, null, null, null, 2, null, 7]);
   });
 });
