@@ -32,7 +32,28 @@ export function drugClassFor(medicationName) {
   return TARGET_CLASSES.find((c) => new RegExp(`\\b${c}\\b`).test(lower)) ?? null;
 }
 
+/**
+ * Key identifying "the same drug" across medication rows (refills, duplicates, deleted rows):
+ * the target drug class when the name names one, else the lowercased name with whitespace
+ * collapsed and strength/dose text (everything from the first digit) stripped.
+ */
+export function drugKeyFor(medicationName) {
+  const cls = drugClassFor(medicationName);
+  if (cls) return cls;
+  if (typeof medicationName !== 'string') return null;
+  const norm = medicationName.toLowerCase().replace(/\s+/g, ' ').trim();
+  const head = norm.split(/\d/)[0].replace(/[\s,;:()\-\/]+$/, '').trim();
+  return head || norm || null;
+}
+
 const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const titleCaseWords = (s) => s.split(' ').map(titleCase).join(' ');
+
+/** Same copy as the photo engine's duplicate check; label is the drug key title-cased. */
+export function duplicateMedicationProblem(drugKey) {
+  const display = titleCaseWords(String(drugKey ?? ''));
+  return { code: 'duplicate_medication', label: display, message: `${display} is listed more than once. Remove the old entry before checking.` };
+}
 const normImprint = (s) => String(s ?? '').toLowerCase().replace(/[\s;]/g, '');
 const isPosInt = (n) => Number.isInteger(n) && n > 0;
 
@@ -123,7 +144,7 @@ export function evaluatePillCheck({ detections, medications, todayTotals, catalo
       continue;
     }
     if (matches.length > 1) {
-      labelProblems.push({ code: 'duplicate_medication', label: display, message: `${display} is listed more than once. Remove the old entry before checking.` });
+      labelProblems.push(duplicateMedicationProblem(label));
       continue;
     }
     const med = matches[0];

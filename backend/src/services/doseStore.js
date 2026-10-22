@@ -1,16 +1,32 @@
 // Persistence for pill checks and dose logs. No Express here.
 // NOTE: the db wrapper has no transaction support, so multi-statement writes are sequential awaits.
-import { resolvableFailureIds } from './doseRules.js';
+import { resolvableFailureIds, drugKeyFor } from './doseRules.js';
 import { canAccessPatient } from '../utils/patientAccess.js';
 
-export async function todayTotals(db, patientId, localDate) {
+/**
+ * Pills already logged on localDate, summed by drug key across ALL of the patient's medication rows
+ * (active and inactive), so a refill row, duplicate row or deleted row never resets the daily maximum.
+ * Returns { [drugKey]: total }.
+ */
+export async function todayTotalsByDrug(db, patientId, localDate) {
   const rows = await db.prepare(`
-    SELECT medication_id, SUM(pill_count) AS total
-    FROM dose_logs WHERE patient_id = ? AND local_date = ?
-    GROUP BY medication_id
+    SELECT m.name AS name, d.pill_count AS pill_count
+    FROM dose_logs d JOIN medications m ON m.id = d.medication_id
+    WHERE d.patient_id = ? AND d.local_date = ?
   `).all(patientId, localDate);
   const totals = {};
-  for (const r of rows) totals[r.medication_id] = Number(r.total);
+  for (const r of rows) {
+    const key = drugKeyFor(r.name);
+    totals[key] = (totals[key] ?? 0) + Number(r.pill_count);
+  }
+  return totals;
+}
+
+/** Per-medication-id view of todayTotalsByDrug for the given medications: { [medicationId]: total }. */
+export async function todayTotals(db, patientId, localDate, medications) {
+  const byDrug = await todayTotalsByDrug(db, patientId, localDate);
+  const totals = {};
+  for (const m of medications ?? []) totals[m.id] = byDrug[drugKeyFor(m.name)] ?? 0;
   return totals;
 }
 
