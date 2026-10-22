@@ -25,6 +25,7 @@ import alertRoutes from './routes/alerts.js';
 import organizationRoutes from './routes/organizations.js';
 import pillCheckRoutes from './routes/pillChecks.js';
 import doseLogRoutes from './routes/doseLogs.js';
+import calendarRoutes from './routes/calendar.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -143,6 +144,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/pill-checks', pillCheckRoutes);
 app.use('/api/dose-logs', doseLogRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 // WebSocket
 wss.on('error', (error) => {
