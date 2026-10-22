@@ -34,10 +34,12 @@ export async function guardPatient(db, user, patientId) {
   return null;
 }
 
-/** Existence (404) then authorship (403). Returns { err, row }. */
+/** Existence (404), authorship (403), then current access to the row's patient (403). Returns { err, row }. */
 export async function loadOwned(db, table, authorCol, id, user, label) {
   const row = await db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
   if (!row) return { err: { status: 404, error: `${label} not found` } };
   if (String(row[authorCol]) !== String(user.id)) return { err: { status: 403, error: 'Only the author can change this' } };
+  const accessErr = await guardPatient(db, user, row.patient_id);
+  if (accessErr) return { err: accessErr };
   return { row };
 }

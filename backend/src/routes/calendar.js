@@ -2,38 +2,22 @@ import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
-import { canAccessPatient } from '../utils/patientAccess.js';
+import { parseId, validDate, guardPatient } from '../services/entryGuards.js';
 import { buildMonth, buildDay } from '../services/calendarAggregate.js';
 
 const router = express.Router();
 router.use(authenticateToken);
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-function isValidDate(s) {
-  const m = DATE_RE.exec(typeof s === 'string' ? s : '');
-  if (!m) return false;
-  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-  const dt = new Date(Date.UTC(y, mo - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
-}
-
-/** Access (403) then existence (404). Returns {status, error} or null. */
-async function guard(db, user, patientId) {
-  if (!(await canAccessPatient(db, user, patientId))) return { status: 403, error: 'Access denied' };
-  const patient = await db.prepare('SELECT id FROM patients WHERE id = ?').get(patientId);
-  if (!patient) return { status: 404, error: 'Patient not found' };
-  return null;
-}
 
 router.get('/:patientId', async (req, res) => {
   try {
     const month = req.query.month;
     if (typeof month !== 'string' || !MONTH_RE.test(month)) return res.status(400).json({ error: 'Invalid month' });
-    const { patientId } = req.params;
+    const patientId = parseId(req.params.patientId);
+    if (!patientId) return res.status(400).json({ error: 'Invalid patientId' });
     const db = getDb();
-    const err = await guard(db, req.user, patientId);
+    const err = await guardPatient(db, req.user, patientId);
     if (err) return res.status(err.status).json({ error: err.error });
 
     const like = `${month}-%`;
@@ -49,6 +33,7 @@ router.get('/:patientId', async (req, res) => {
     const noteDates = [
       ...(await col('SELECT DISTINCT local_date AS d FROM patient_notes WHERE patient_id = ? AND local_date LIKE ?', patientId, like)),
       ...(await col(
+        // Legacy notes (NULL local_date) use the server-date of created_at; may be off by a day near midnight.
         `SELECT DISTINCT COALESCE(local_date, to_char(created_at, 'YYYY-MM-DD')) AS d FROM care_notes
          WHERE patient_id = ? AND COALESCE(local_date, to_char(created_at, 'YYYY-MM-DD')) LIKE ?`,
         patientId, like)),
@@ -65,10 +50,12 @@ router.get('/:patientId', async (req, res) => {
 
 router.get('/:patientId/day/:date', async (req, res) => {
   try {
-    const { patientId, date } = req.params;
-    if (!isValidDate(date)) return res.status(400).json({ error: 'Invalid date' });
+    const { date } = req.params;
+    const patientId = parseId(req.params.patientId);
+    if (!patientId) return res.status(400).json({ error: 'Invalid patientId' });
+    if (!validDate(date)) return res.status(400).json({ error: 'Invalid date' });
     const db = getDb();
-    const err = await guard(db, req.user, patientId);
+    const err = await guardPatient(db, req.user, patientId);
     if (err) return res.status(err.status).json({ error: err.error });
 
     const checkins = await db.prepare(
@@ -100,6 +87,7 @@ router.get('/:patientId/day/:date', async (req, res) => {
              u.first_name AS author_first_name, u.last_name AS author_last_name
       FROM care_notes cn LEFT JOIN users u ON u.id = cn.caregiver_id
       WHERE cn.patient_id = ?
+        -- legacy NULL local_date: server-date of created_at (may be off by a day near midnight)
         AND (cn.local_date = ? OR (cn.local_date IS NULL AND to_char(cn.created_at, 'YYYY-MM-DD') = ?))
       ORDER BY cn.created_at, cn.id
     `).all(patientId, date, date);

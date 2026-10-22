@@ -2,6 +2,7 @@ import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
+import { canAccessPatient } from '../utils/patientAccess.js';
 import {
   isPosInt, parseId, validDate, textError, roleGuard, guardPatient, loadOwned, NOTE_TYPES,
 } from '../services/entryGuards.js';
@@ -13,13 +14,16 @@ router.use(authenticateToken);
 router.get('/:patientId', async (req, res) => {
   try {
     const db = getDb();
+    const patientId = parseId(req.params.patientId);
+    if (!patientId) return res.status(400).json({ error: 'Invalid patientId' });
+    if (!(await canAccessPatient(db, req.user, patientId))) return res.status(403).json({ error: 'Access denied' });
     const notes = await db.prepare(`
       SELECT cn.*, u.first_name, u.last_name
       FROM care_notes cn
       LEFT JOIN users u ON cn.caregiver_id = u.id
       WHERE cn.patient_id = ?
       ORDER BY cn.created_at DESC
-    `).all(req.params.patientId);
+    `).all(patientId);
     res.json({ notes });
   } catch (error) {
     logger.error('Get care notes error:', error);

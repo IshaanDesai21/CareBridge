@@ -64,7 +64,7 @@ describe('calendar month', () => {
     await month('2026-10');
     const flag = mockDb.calls.find((c) => /FROM pill_checks/.test(c.sql));
     expect(flag.sql).toMatch(/status = 'fail' AND resolved_by_check_id IS NULL/);
-    expect(flag.params).toEqual(['1', '2026-10-%']);
+    expect(flag.params).toEqual([1, '2026-10-%']);
   });
 
   test('legacy care notes (NULL local_date) count by created_at', async () => {
@@ -96,6 +96,14 @@ describe('calendar month', () => {
   });
 });
 
+describe('calendar patientId validation', () => {
+  test('non-numeric patientId -> 400 on both routes', async () => {
+    mockDb = makeDb();
+    expect((await month('2026-10', family, 'abc')).status).toBe(400);
+    expect((await day('2026-10-19', family, 'abc')).status).toBe(400);
+  });
+});
+
 describe('calendar day', () => {
   test('200 passes rows through to day payload', async () => {
     mockDb = makeDb({
@@ -120,7 +128,7 @@ describe('calendar day', () => {
     await day('2026-10-19');
     const cn = mockDb.calls.find((c) => /FROM care_notes cn/.test(c.sql));
     expect(cn.sql).toMatch(/cn\.local_date IS NULL AND to_char\(cn\.created_at, 'YYYY-MM-DD'\) = \?/);
-    expect(cn.params).toEqual(['1', '2026-10-19', '2026-10-19']);
+    expect(cn.params).toEqual([1, '2026-10-19', '2026-10-19']);
     const med = mockDb.calls.find((c) => /FROM medications WHERE/.test(c.sql));
     expect(med.sql).not.toMatch(/is_active = 1/);
   });
