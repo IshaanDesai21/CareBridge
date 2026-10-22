@@ -3,7 +3,7 @@ import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
 import {
-  isPosInt, parseId, validDate, textError, roleGuard, guardPatient, loadOwned, MEAL_TYPES,
+  isPosInt, parseId, localDateError, textError, roleGuard, guardPatient, loadOwned, MEAL_TYPES,
 } from '../services/entryGuards.js';
 
 const router = express.Router();
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
     const db = getDb();
     let err = roleGuard(req.user, WRITERS, ROLE_MSG);
     if (!err && !isPosInt(patientId)) err = { status: 400, error: 'patientId must be a positive integer' };
-    if (!err && !validDate(localDate)) err = { status: 400, error: 'localDate must be YYYY-MM-DD' };
+    if (!err) err = localDateError(localDate);
     if (!err && !MEAL_TYPES.includes(mealType)) err = { status: 400, error: 'Invalid mealType' };
     if (!err) {
       const t = textError(description, 'description');

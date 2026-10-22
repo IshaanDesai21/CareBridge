@@ -2,6 +2,7 @@
 // NOTE: the db wrapper has no transaction support, so multi-statement writes are sequential awaits.
 import { resolvableFailureIds, drugKeyFor } from './doseRules.js';
 import { canAccessPatient } from '../utils/patientAccess.js';
+import { localDateError } from './entryGuards.js';
 
 /**
  * Pills already logged on localDate, summed by drug key across ALL of the patient's medication rows
@@ -142,10 +143,7 @@ const isPosInt =(n) => Number.isInteger(n) && n > 0;
 export async function guardDoseRequest(db, user, { patientId, localDate }) {
   if (!['caregiver', 'organization'].includes(user?.role)) return { status: 403, error: 'Only caregivers can log doses' };
   if (!isPosInt(patientId)) return { status: 400, error: 'patientId must be a positive integer' };
-  if (typeof localDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
-    return { status: 400, error: 'localDate must be YYYY-MM-DD' };
-  }
-  return null;
+  return localDateError(localDate);
 }
 
 /** After shape validation: access (403) then existence (404). */

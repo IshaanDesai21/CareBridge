@@ -4,7 +4,7 @@ import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
 import { canAccessPatient } from '../utils/patientAccess.js';
 import {
-  isPosInt, parseId, validDate, textError, roleGuard, guardPatient, loadOwned, NOTE_TYPES,
+  isPosInt, parseId, localDateError, textError, roleGuard, guardPatient, loadOwned, NOTE_TYPES,
 } from '../services/entryGuards.js';
 
 const router = express.Router();
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
     const db = getDb();
     let err = roleGuard(req.user, WRITERS, ROLE_MSG);
     if (!err && !isPosInt(patientId)) err = { status: 400, error: 'patientId must be a positive integer' };
-    if (!err && localDate != null && !validDate(localDate)) err = { status: 400, error: 'localDate must be YYYY-MM-DD' };
+    if (!err && localDate != null) err = localDateError(localDate);
     if (!err && noteType != null && !NOTE_TYPES.includes(noteType)) err = { status: 400, error: 'Invalid noteType' };
     if (!err) {
       const t = textError(content, 'content');

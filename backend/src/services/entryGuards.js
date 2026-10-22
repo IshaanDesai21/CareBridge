@@ -17,6 +17,24 @@ export function validDate(s) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+export const LOCAL_DATE_SLACK_DAYS = 1;
+
+/**
+ * Format + sanity check for a client-supplied local calendar date on writes. Every time zone's
+ * "today" is within one day of the server's UTC date, so anything further out is rejected.
+ * Returns {status, error} or null. `now` (ms) is injectable for tests.
+ */
+export function localDateError(s, now = Date.now()) {
+  if (!validDate(s)) return { status: 400, error: 'localDate must be YYYY-MM-DD' };
+  const t = new Date(now);
+  const todayMs = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+  const [y, m, d] = s.split('-').map(Number);
+  const diffDays = Math.round((Date.UTC(y, m - 1, d) - todayMs) / DAY_MS);
+  if (Math.abs(diffDays) > LOCAL_DATE_SLACK_DAYS) return { status: 400, error: 'localDate out of range' };
+  return null;
+}
+
 /** Returns an error string or null. */
 export function textError(value, field) {
   if (typeof value !== 'string' || value.trim() === '') return `${field} is required`;

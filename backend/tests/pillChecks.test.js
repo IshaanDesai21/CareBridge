@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest';
 import { invokeRoute } from './helpers/invokeRoute.js';
 import { fakeDb } from './helpers/fakeDb.js';
 
@@ -17,6 +17,13 @@ vi.mock('../src/database/db.js', () => ({
 
 import pillChecks from '../src/routes/pillChecks.js';
 import doseLogs from '../src/routes/doseLogs.js';
+
+// Fixture dates are 2026-10-19; pin the server clock so the localDate range guard accepts them.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-19T12:00:00Z'));
+});
+afterAll(() => vi.useRealTimers());
 
 const caregiver = { id: 2, role: 'caregiver' };
 const med = {
@@ -291,5 +298,26 @@ describe('daily maximum by drug across medication rows', () => {
     mockDb = makeDb({ meds: [a, b] });
     const r = await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: okDate });
     expect(r.body.check.problems[0]).toMatchObject({ code: 'duplicate_medication', label: 'Metformin' });
+  });
+});
+
+describe('localDate range', () => {
+  // Clock pinned to 2026-10-19T12:00Z above.
+  test('today and +/-1 day accepted; +/-2 days rejected on both routes', async () => {
+    for (const [d, ok] of [['2026-10-19', true], ['2026-10-18', true], ['2026-10-20', true], ['2026-10-17', false], ['2026-10-21', false], ['2025-10-19', false]]) {
+      mockDb = makeDb();
+      const p = await post({ patientId: 1, localDate: d, detections: lisin });
+      const m = await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: d });
+      for (const r of [p, m]) {
+        if (ok) expect(r.status, d).toBe(201);
+        else expect(r, d).toEqual({ status: 400, body: { error: 'localDate out of range' } });
+      }
+      if (!ok) expect(callsMatching(mockDb, /INSERT/)).toHaveLength(0);
+    }
+  });
+  test('impossible calendar date -> format error', async () => {
+    mockDb = makeDb();
+    expect((await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: '2026-02-30' })).body.error)
+      .toBe('localDate must be YYYY-MM-DD');
   });
 });

@@ -104,13 +104,21 @@ router.post('/:patientId/read', async (req, res) => {
     const db = getDb();
     if (!(await isConversationParticipant(db, req.user.id, patientId))) return denied(res);
 
+    // Clamp to the newest message in this conversation so a client can't pre-mark future messages read.
+    const latest = await db.prepare(
+      'SELECT MAX(id) AS max_id FROM family_messages WHERE patient_id = ?',
+    ).get(patientId);
+    const maxId = latest?.max_id == null ? 0 : Number(latest.max_id);
+    const clamped = Math.min(lastRead, maxId);
+    if (!(clamped > 0)) return res.json({ ok: true });
+
     await db.prepare(`
       INSERT INTO family_message_reads (user_id, patient_id, last_read_message_id)
       VALUES (?, ?, ?)
       ON CONFLICT (user_id, patient_id) DO UPDATE SET
         last_read_message_id = GREATEST(family_message_reads.last_read_message_id, EXCLUDED.last_read_message_id)
       RETURNING user_id
-    `).run(req.user.id, patientId, lastRead);
+    `).run(req.user.id, patientId, clamped);
     res.json({ ok: true });
   } catch (error) {
     logger.error('Mark messages read error:', error);
