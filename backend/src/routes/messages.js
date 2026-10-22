@@ -109,6 +109,7 @@ router.post('/:patientId/read', async (req, res) => {
       VALUES (?, ?, ?)
       ON CONFLICT (user_id, patient_id) DO UPDATE SET
         last_read_message_id = GREATEST(family_message_reads.last_read_message_id, EXCLUDED.last_read_message_id)
+      RETURNING user_id
     `).run(req.user.id, patientId, lastRead);
     res.json({ ok: true });
   } catch (error) {
@@ -141,9 +142,9 @@ router.post('/:patientId', async (req, res) => {
       .filter((id) => String(id) !== String(req.user.id));
     for (const id of recipients) {
       try {
-        sendToUser(id, { type: 'family_message', message });
+        sendToUser(id, { type: 'family_message', patientId, message });
       } catch (e) {
-        logger.warn?.('Family message push failed:', e);
+        logger.warn('Family message push failed:', e);
       }
     }
 
