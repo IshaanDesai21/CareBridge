@@ -25,10 +25,11 @@ const family = { id: 3, role: 'family' };
 const D = '2026-10-19';
 
 // rows: map of table -> existing row (or null)
-function makeDb({ owns = true, linked = true, patient = { id: 1 }, rows = {} } = {}) {
+function makeDb({ owns = true, linked = true, noAccess = false, patient = { id: 1 }, rows = {} } = {}) {
   return fakeDb([
     [/SELECT id, user_id FROM patients/, { get: () => (owns ? { id: 1, user_id: 7 } : { id: 1, user_id: 99 }) }],
-    [/SELECT organization_id FROM users/, { get: () => ({ organization_id: null }) }],
+    [/SELECT organization_id FROM users/, { get: () => ({ organization_id: noAccess ? 5 : null }) }],
+    [/SELECT p\.id FROM patients p/, { get: () => (noAccess ? undefined : { id: 1 }) }],
     [/FROM family_patient_links/, { get: () => (linked ? { linked: 1 } : undefined) }],
     [/SELECT id FROM patients WHERE id = \?/, { get: () => patient }],
     [/INSERT INTO patient_notes/, { run: () => ({ lastInsertRowid: 11 }) }],
@@ -207,5 +208,34 @@ describe('care notes', () => {
     expect((await call(careNotes, 'put', '/:noteId', { content: 'x' }, family, { noteId: '13' })).status).toBe(403);
     mockDb = makeDb({ rows: { care_notes: { id: 13, caregiver_id: 2 } } });
     expect((await call(careNotes, 'put', '/:noteId', { content: 'x' }, caregiver, { noteId: '13' })).status).toBe(200);
+  });
+});
+
+describe('revoked access on edits', () => {
+  test('author without current patient access -> 403 and no write', async () => {
+    mockDb = makeDb({ noAccess: true, rows: { meals: { id: 12, patient_id: 1, author_user_id: 2 } } });
+    expect((await call(meals, 'put', '/:id', { description: 'x' }, caregiver, { id: '12' })).status).toBe(403);
+    expect((await call(meals, 'delete', '/:id', {}, caregiver, { id: '12' })).status).toBe(403);
+    mockDb = makeDb({ noAccess: true, rows: { care_notes: { id: 13, patient_id: 1, caregiver_id: 2 } } });
+    expect((await call(careNotes, 'put', '/:noteId', { content: 'x' }, caregiver, { noteId: '13' })).status).toBe(403);
+    mockDb = makeDb({ owns: false, rows: { patient_notes: { id: 11, patient_id: 1, author_user_id: 7 } } });
+    expect((await call(patientNotes, 'put', '/:id', { content: 'x' }, patientUser, { id: '11' })).status).toBe(403);
+    expect((await call(patientNotes, 'delete', '/:id', {}, patientUser, { id: '11' })).status).toBe(403);
+    expect(writes(/UPDATE|DELETE/)).toHaveLength(0);
+  });
+});
+
+describe('care notes GET access', () => {
+  test('linked family -> 200; unlinked -> 403; bad id -> 400', async () => {
+    mockDb = fakeDb([
+      [/FROM family_patient_links/, { get: () => ({ linked: 1 }) }],
+      [/FROM care_notes cn/, { all: () => [{ id: 1 }] }],
+    ]);
+    const ok = await call(careNotes, 'get', '/:patientId', {}, family, { patientId: '1' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.notes).toEqual([{ id: 1 }]);
+    mockDb = fakeDb([[/FROM family_patient_links/, { get: () => undefined }]]);
+    expect((await call(careNotes, 'get', '/:patientId', {}, family, { patientId: '1' })).status).toBe(403);
+    expect((await call(careNotes, 'get', '/:patientId', {}, family, { patientId: 'abc' })).status).toBe(400);
   });
 });
