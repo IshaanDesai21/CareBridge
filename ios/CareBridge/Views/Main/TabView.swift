@@ -6,6 +6,7 @@ import Charts
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @State private var selectedTab = MainTabView.initialTab
+    @ObservedObject private var messagesStore = MessagesStore.shared
 
     /// DEBUG builds honor a `-initialTab <index>` launch argument (scripted simulator
     /// walkthroughs); Release always starts on the first tab.
@@ -54,10 +55,15 @@ struct MainTabView: View {
                     .environmentObject(authManager)
                     .tabItem { Label("Calendar", systemImage: "calendar") }
                     .tag(1)
+                    MessagesView(role: "family")
+                        .environmentObject(authManager)
+                        .tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right.fill") }
+                        .badge(messagesStore.totalUnread)
+                        .tag(2)
                     ProfileView()
                         .environmentObject(authManager)
                         .tabItem { Label("Profile", systemImage: "person.fill") }
-                        .tag(2)
+                        .tag(3)
                 }
                 .tint(Color.cbPrimary)
 
@@ -75,14 +81,28 @@ struct MainTabView: View {
                         .environmentObject(authManager)
                         .tabItem { Label("Medications", systemImage: "pill.fill") }
                         .tag(2)
+                    MessagesView(role: "patient")
+                        .environmentObject(authManager)
+                        .tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right.fill") }
+                        .badge(messagesStore.totalUnread)
+                        .tag(3)
                     ProfileView()
                         .environmentObject(authManager)
                         .tabItem { Label("Profile", systemImage: "person.fill") }
-                        .tag(3)
+                        .tag(4)
                 }
                 .tint(Color.cbPrimary)
             }
         }
+        .task(id: authManager.currentUser?.id) { await refreshMessages() }
+    }
+
+    /// Patients and family only: caregivers/organizations are never conversation participants.
+    private func refreshMessages() async {
+        guard let user = authManager.currentUser, ["patient", "family"].contains(user.role),
+              let token = authManager.token else { return }
+        messagesStore.setCurrentUser(user.id)
+        await messagesStore.refreshUnread(token: token)
     }
 }
 
