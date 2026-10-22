@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */; };
+		74213685858987B48744447E /* MealEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */; };
+		BBE22037AA6DEDC7B9C76F79 /* NoteEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2C82705589335A777CEC5D /* NoteEditorSheet.swift */; };
+		4F6325F3AFB7BD2BCADE6598 /* CalendarDayCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476FF9D1A01E05C7856F19A0 /* CalendarDayCards.swift */; };
+		394EB407CEBC906A3AC32F1D /* CalendarMonthGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A094AC4EB9276C31F56B68 /* CalendarMonthGrid.swift */; };
+		3D78F0958ED9FF21F4A9D6DB /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A348A4E0F6182080A04F3AF4 /* CalendarView.swift */; };
 		11C15915AF9B71E1592E55B4 /* Date+LocalDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5D8F91563CDB02E92D504D /* Date+LocalDate.swift */; };
 		583C5A4019C2FD04CA1B0126 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */; };
 		16B3299C682E38B83E4590A9 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D42E72583C2D66B44EC37 /* JournalView.swift */; };
@@ -30,7 +36,6 @@
 		A96AEF6303344350DFC4AE80 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9BBA5E4000276DC9EA95A8D /* Models.swift */; };
 		B4C4424CE34B6CCB596541A2 /* MedicationScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CF2202915AC6C596833DEC /* MedicationScannerView.swift */; };
 		B9EED45D004D2B638E76D399 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F639552A5B936CD1ECB04602 /* EmptyStateView.swift */; };
-		DB339767017760FD227417C9 /* WellnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA829762EAE5922F423DDBE /* WellnessView.swift */; };
 		E8C4706738AAB307A3DAB5E4 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */; };
 		F06DD8C86CFF4C75DC947E5D /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B8FD15412A91C92801C91E /* SpeechManager.swift */; };
 		F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601234567890A /* AddMedicationView.swift */; };
@@ -68,10 +73,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarPatientPicker.swift"; sourceTree = "<group>"; };
+		82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEditorSheet.swift"; sourceTree = "<group>"; };
+		8E2C82705589335A777CEC5D /* NoteEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NoteEditorSheet.swift"; sourceTree = "<group>"; };
+		476FF9D1A01E05C7856F19A0 /* CalendarDayCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarDayCards.swift"; sourceTree = "<group>"; };
+		C1A094AC4EB9276C31F56B68 /* CalendarMonthGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarMonthGrid.swift"; sourceTree = "<group>"; };
+		A348A4E0F6182080A04F3AF4 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarView.swift"; sourceTree = "<group>"; };
 		4C5D8F91563CDB02E92D504D /* Date+LocalDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+LocalDate.swift"; sourceTree = "<group>"; };
 		6F22D7D7666AF0E3F23A3001 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarModels.swift"; sourceTree = "<group>"; };
 		12B6A71670D68B89C9A86C6C /* TabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabView.swift; sourceTree = "<group>"; };
-		1DA829762EAE5922F423DDBE /* WellnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessView.swift; sourceTree = "<group>"; };
 		1F7A8E14DA0907AFF1BBBFF4 /* CareBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FB4CFBB64D99F5FBD51F1F5 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		49CF2202915AC6C596833DEC /* MedicationScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationScannerView.swift; sourceTree = "<group>"; };
@@ -147,6 +157,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EE5F4DD484D8479A76462F6D /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */,
+				82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */,
+				8E2C82705589335A777CEC5D /* NoteEditorSheet.swift */,
+				476FF9D1A01E05C7856F19A0 /* CalendarDayCards.swift */,
+				C1A094AC4EB9276C31F56B68 /* CalendarMonthGrid.swift */,
+				A348A4E0F6182080A04F3AF4 /* CalendarView.swift */,
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
 		07D852466CA0BD085B0AFB3B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -250,6 +273,7 @@
 		8480286FBBA93A33DAE026D6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				EE5F4DD484D8479A76462F6D /* Calendar */,
 				425DA6A1052205153E3681BE /* Authentication */,
 				4AF39178144D5145318CBDAC /* Components */,
 				4BFE78FF44569D8B6A26CFD4 /* Home */,
@@ -310,7 +334,6 @@
 			isa = PBXGroup;
 			children = (
 				CA5F12E8F331748FC465B2BD /* WellnessCheckinView.swift */,
-				1DA829762EAE5922F423DDBE /* WellnessView.swift */,
 			);
 			path = Wellness;
 			sourceTree = "<group>";
@@ -441,10 +464,15 @@
 				191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */,
 				20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */,
 				9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */,
+				899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */,
+				74213685858987B48744447E /* MealEditorSheet.swift in Sources */,
+				BBE22037AA6DEDC7B9C76F79 /* NoteEditorSheet.swift in Sources */,
+				4F6325F3AFB7BD2BCADE6598 /* CalendarDayCards.swift in Sources */,
+				394EB407CEBC906A3AC32F1D /* CalendarMonthGrid.swift in Sources */,
+				3D78F0958ED9FF21F4A9D6DB /* CalendarView.swift in Sources */,
 				11C15915AF9B71E1592E55B4 /* Date+LocalDate.swift in Sources */,
 				583C5A4019C2FD04CA1B0126 /* CalendarModels.swift in Sources */,
 				3E27EE16CBB7A3E10FBB2D9A /* WellnessCheckinView.swift in Sources */,
-				DB339767017760FD227417C9 /* WellnessView.swift in Sources */,
 				F1A2B3C4D5E601234567890F /* AddMedicationView.swift in Sources */,
 				FE6407A2697AA59FE9A8409C /* AccessibilityManager.swift in Sources */,
 				306959CC017B6EC187BDC6FE /* NotificationsManager.swift in Sources */,
