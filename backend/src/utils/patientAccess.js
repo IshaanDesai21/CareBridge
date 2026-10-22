@@ -35,3 +35,31 @@ export async function canAccessPatient(db, user, patientId) {
       return false;
   }
 }
+
+/**
+ * Private patient<->family conversation membership. Pure ownership/link check:
+ * true iff the user owns the patient record or is linked to it. Role is ignored,
+ * so caregivers and organizations can never qualify.
+ */
+export async function isConversationParticipant(db, userId, patientId) {
+  const owned = await db
+    .prepare('SELECT id FROM patients WHERE id = ? AND user_id = ?')
+    .get(patientId, userId);
+  if (owned) return true;
+  const link = await db
+    .prepare('SELECT 1 AS linked FROM family_patient_links WHERE family_user_id = ? AND patient_id = ?')
+    .get(userId, patientId);
+  return !!link;
+}
+
+/** User ids of everyone in the conversation: the patient's user plus linked family users. */
+export async function conversationParticipantIds(db, patientId) {
+  const patient = await db.prepare('SELECT user_id FROM patients WHERE id = ?').get(patientId);
+  const links = await db
+    .prepare('SELECT family_user_id FROM family_patient_links WHERE patient_id = ?')
+    .all(patientId);
+  const ids = [];
+  if (patient?.user_id != null) ids.push(patient.user_id);
+  for (const l of links) if (!ids.includes(l.family_user_id)) ids.push(l.family_user_id);
+  return ids;
+}
