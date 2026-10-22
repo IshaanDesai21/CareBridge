@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7922979399CB271A474DFC7E /* MessagesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 783B99D5A7F050A51C7ABDF1 /* MessagesStore.swift */; };
 		899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */; };
 		74213685858987B48744447E /* MealEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */; };
 		BBE22037AA6DEDC7B9C76F79 /* NoteEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2C82705589335A777CEC5D /* NoteEditorSheet.swift */; };
@@ -73,6 +74,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		783B99D5A7F050A51C7ABDF1 /* MessagesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MessagesStore.swift"; sourceTree = "<group>"; };
 		A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarPatientPicker.swift"; sourceTree = "<group>"; };
 		82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEditorSheet.swift"; sourceTree = "<group>"; };
 		8E2C82705589335A777CEC5D /* NoteEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NoteEditorSheet.swift"; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 		3C1663E8B48B01531E898A01 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				783B99D5A7F050A51C7ABDF1 /* MessagesStore.swift */,
 				5D6D37C154F5A041E1E2CEB2 /* AuthenticationManager.swift */,
 				5D8EA82736EF1345B727963B /* AccessibilityManager.swift */,
 				FD51883DBF456BCA0A4CF63A /* NotificationsManager.swift */,
@@ -464,6 +467,7 @@
 				191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */,
 				20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */,
 				9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */,
+				7922979399CB271A474DFC7E /* MessagesStore.swift in Sources */,
 				899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */,
 				74213685858987B48744447E /* MealEditorSheet.swift in Sources */,
 				BBE22037AA6DEDC7B9C76F79 /* NoteEditorSheet.swift in Sources */,

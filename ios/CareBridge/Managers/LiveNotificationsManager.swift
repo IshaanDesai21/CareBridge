@@ -90,6 +90,15 @@ final class LiveNotificationsManager: NSObject, ObservableObject {
                let body = notif["body"] as? String {
                 NotificationsManager.shared.postLocal(title: title, body: body)
             }
+        case "family_message":
+            // In-app only (badge + conversation); deliberately no local system notification.
+            // handle(_:) already runs on the main actor (see listen()).
+            if let payload = json["message"],
+               JSONSerialization.isValidJSONObject(payload),
+               let messageData = try? JSONSerialization.data(withJSONObject: payload),
+               let familyMessage = try? JSONDecoder().decode(FamilyMessage.self, from: messageData) {
+                MessagesStore.shared.receive(familyMessage)
+            }
         default:
             break
         }

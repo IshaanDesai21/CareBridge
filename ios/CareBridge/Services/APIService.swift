@@ -397,6 +397,52 @@ class APIService {
         return response.patient.id
     }
 
+    // MARK: - Family messages (private patient↔family conversation)
+
+    /// Every patient linked to the current family user (GET /family/patients).
+    func getLinkedPatients(token: String) async throws -> [Patient] {
+        if APIService.isDemoMode { return [APIService.demoPatient] }
+        struct PatientsResponse: Codable { let patients: [Patient] }
+        let response: PatientsResponse = try await get(endpoint: "/family/patients", token: token)
+        return response.patients
+    }
+
+    /// One page of a conversation, ascending by id. `before` is a message id: only
+    /// messages older than it are returned (used to page backwards).
+    func getMessages(patientId: Int, before: Int? = nil, token: String) async throws -> [FamilyMessage] {
+        if APIService.isDemoMode { return DemoMessagesStore.shared.messages(patientId: patientId, before: before) }
+        struct MessagesResponse: Codable { let messages: [FamilyMessage] }
+        var endpoint = "/messages/\(patientId)"
+        if let before { endpoint += "?before=\(before)" }
+        let response: MessagesResponse = try await get(endpoint: endpoint, token: token)
+        return response.messages
+    }
+
+    func sendMessage(patientId: Int, content: String, token: String) async throws -> FamilyMessage {
+        if APIService.isDemoMode { return DemoMessagesStore.shared.send(patientId: patientId, content: content) }
+        struct Body: Codable { let content: String }
+        struct MessageResponse: Codable { let message: FamilyMessage }
+        let response: MessageResponse = try await post(endpoint: "/messages/\(patientId)", body: Body(content: content), token: token)
+        return response.message
+    }
+
+    func markMessagesRead(patientId: Int, lastReadMessageId: Int, token: String) async throws {
+        if APIService.isDemoMode { DemoMessagesStore.shared.markRead(patientId: patientId); return }
+        struct Body: Codable { let lastReadMessageId: Int }
+        struct OkResponse: Codable { let ok: Bool }
+        let _: OkResponse = try await post(endpoint: "/messages/\(patientId)/read",
+                                           body: Body(lastReadMessageId: lastReadMessageId), token: token)
+    }
+
+    /// Unread count per patient conversation the caller participates in.
+    func getUnreadCounts(token: String) async throws -> [Int: Int] {
+        if APIService.isDemoMode { return DemoMessagesStore.shared.unreadCounts() }
+        struct Entry: Codable { let patientId: Int; let count: Int }
+        struct UnreadResponse: Codable { let unread: [Entry] }
+        let response: UnreadResponse = try await get(endpoint: "/messages/unread", token: token)
+        return Dictionary(response.unread.map { ($0.patientId, $0.count) }, uniquingKeysWith: { _, last in last })
+    }
+
     // MARK: - AI Chat
 
     func sendChatMessage(_ message: String, patientGender: String? = nil, history: [[String: String]] = [], token: String) async throws -> (reply: String, companionName: String) {
@@ -816,6 +862,57 @@ extension APIService {
                          isUrgent: 0, isAcknowledged: 0, createdAt: demoDateStr(daysOffset: -1))
         ]
     }
+}
+
+// MARK: - Demo messages store
+
+/// In-memory, offline family conversation for demo mode: "Dad" (the patient, user 1)
+/// and two family members. The last two messages start unread; sends append until relaunch.
+final class DemoMessagesStore {
+    static let shared = DemoMessagesStore()
+
+    private var messages: [FamilyMessage]
+    private var unread: [Int: Int] = [1: 2]
+
+    private init() {
+        func at(_ minutesAgo: Int) -> String {
+            let d = Date().addingTimeInterval(TimeInterval(-minutesAgo * 60))
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return f.string(from: d)
+        }
+        func msg(_ id: Int, _ userId: Int, _ name: String, _ role: String, _ content: String, _ minutesAgo: Int) -> FamilyMessage {
+            FamilyMessage(id: id, patientId: 1, senderUserId: userId, senderName: name,
+                          senderRole: role, content: content, createdAt: at(minutesAgo))
+        }
+        messages = [
+            msg(1, 3, "Michael Johnson", "family", "Morning Dad! How did you sleep?", 26 * 60),
+            msg(2, 1, "Dad", "patient", "Pretty well, thanks. Took my pills with breakfast.", 25 * 60 + 40),
+            msg(3, 5, "Emily Johnson", "family", "Great to hear! I'll bring lunch over on Saturday.", 25 * 60),
+            msg(4, 1, "Dad", "patient", "Looking forward to it. Bring the grandkids if you can.", 24 * 60 + 30),
+            msg(5, 3, "Michael Johnson", "family", "Don't forget your appointment with Dr. Patel tomorrow at 10.", 95),
+            msg(6, 5, "Emily Johnson", "family", "I can drive you there, Dad. See you at 9:30!", 40),
+        ]
+    }
+
+    func messages(patientId: Int, before: Int?) -> [FamilyMessage] {
+        messages.filter { m in m.patientId == patientId && (before.map { m.id < $0 } ?? true) }
+    }
+
+    func send(patientId: Int, content: String) -> FamilyMessage {
+        let role = APIService.demoUserRole
+        let user = APIService.demoUser(for: role)
+        let message = FamilyMessage(
+            id: (messages.map(\.id).max() ?? 0) + 1, patientId: patientId, senderUserId: user.id,
+            senderName: role == "patient" ? "Dad" : user.fullName, senderRole: role,
+            content: content, createdAt: ISO8601DateFormatter().string(from: Date()))
+        messages.append(message)
+        return message
+    }
+
+    func markRead(patientId: Int) { unread[patientId] = 0 }
+
+    func unreadCounts() -> [Int: Int] { unread }
 }
 
 // MARK: - Demo calendar store
