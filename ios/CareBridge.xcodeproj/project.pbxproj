@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2BFD14ECFBC2A8DC6B12DE39 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08CAD49E0EB13D1D2774AA2E /* ConversationView.swift */; };
+		2E96B620C4EED49FB922100F /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CDA85F4B78C7FD75C3808C /* MessagesView.swift */; };
 		7922979399CB271A474DFC7E /* MessagesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 783B99D5A7F050A51C7ABDF1 /* MessagesStore.swift */; };
 		899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */; };
 		74213685858987B48744447E /* MealEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */; };
@@ -74,6 +76,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		08CAD49E0EB13D1D2774AA2E /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ConversationView.swift"; sourceTree = "<group>"; };
+		74CDA85F4B78C7FD75C3808C /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MessagesView.swift"; sourceTree = "<group>"; };
 		783B99D5A7F050A51C7ABDF1 /* MessagesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MessagesStore.swift"; sourceTree = "<group>"; };
 		A3A00DC608ECAA53A962938A /* CalendarPatientPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CalendarPatientPicker.swift"; sourceTree = "<group>"; };
 		82CBE47F35CA44A1A0A533E3 /* MealEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEditorSheet.swift"; sourceTree = "<group>"; };
@@ -159,6 +163,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A1F7DB5E3D45A0F81C19F977 /* Messages */ = {
+			isa = PBXGroup;
+			children = (
+				08CAD49E0EB13D1D2774AA2E /* ConversationView.swift */,
+				74CDA85F4B78C7FD75C3808C /* MessagesView.swift */,
+			);
+			path = Messages;
+			sourceTree = "<group>";
+		};
 		EE5F4DD484D8479A76462F6D /* Calendar */ = {
 			isa = PBXGroup;
 			children = (
@@ -276,6 +289,7 @@
 		8480286FBBA93A33DAE026D6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A1F7DB5E3D45A0F81C19F977 /* Messages */,
 				EE5F4DD484D8479A76462F6D /* Calendar */,
 				425DA6A1052205153E3681BE /* Authentication */,
 				4AF39178144D5145318CBDAC /* Components */,
@@ -467,6 +481,8 @@
 				191E0DDE7B7ACFAC2A087084 /* ProfileView.swift in Sources */,
 				20130FEF3C8C6F6147E3017C /* RegisterView.swift in Sources */,
 				9EBC0E48EAA930BCA3DEC025 /* TabView.swift in Sources */,
+				2BFD14ECFBC2A8DC6B12DE39 /* ConversationView.swift in Sources */,
+				2E96B620C4EED49FB922100F /* MessagesView.swift in Sources */,
 				7922979399CB271A474DFC7E /* MessagesStore.swift in Sources */,
 				899ABDD5EA5832CE3EE5C6F7 /* CalendarPatientPicker.swift in Sources */,
 				74213685858987B48744447E /* MealEditorSheet.swift in Sources */,
