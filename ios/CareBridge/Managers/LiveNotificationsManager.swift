@@ -12,6 +12,9 @@ final class LiveNotificationsManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
     /// Bumped whenever a live notification arrives, so views can refresh their list.
     @Published private(set) var lastReceivedAt: Date?
+    /// Bumped on every successful socket auth (first connect and each reconnect), so views can
+    /// re-fetch state that may have changed while the socket was down.
+    @Published private(set) var authenticatedAt: Date?
 
     private var task: URLSessionWebSocketTask?
     private var session: URLSession?
@@ -83,6 +86,7 @@ final class LiveNotificationsManager: NSObject, ObservableObject {
         switch type {
         case "auth_ok":
             isConnected = true
+            authenticatedAt = Date()
         case "notification":
             lastReceivedAt = Date()
             if let notif = json["notification"] as? [String: Any],

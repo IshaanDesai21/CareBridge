@@ -30,8 +30,9 @@ const row = (id, over = {}) => ({
 });
 
 // participants: users 7 (patient owner) and 3 (family) of patient 1; family 5 also linked.
-function makeDb({ rows = [], unread = [] } = {}) {
+function makeDb({ rows = [], unread = [], maxId = 100 } = {}) {
   return fakeDb([
+    [/SELECT MAX\(id\) AS max_id FROM family_messages WHERE patient_id = \?/, { get: () => ({ max_id: maxId }) }],
     [/FROM patients WHERE id = \? AND user_id = \?/, { get: (pid, uid) => (pid === 1 && uid === 7 ? { id: 1 } : undefined) }],
     [/FROM family_patient_links WHERE family_user_id = \? AND patient_id = \?/, {
       get: (uid, pid) => (pid === 1 && (uid === 3 || uid === 5) ? { linked: 1 } : undefined),
@@ -159,6 +160,19 @@ describe('POST /:patientId/read', () => {
     // db.run appends "RETURNING id" unless the SQL already has RETURNING; this table has no id column.
     expect(c.sql).toMatch(/RETURNING user_id/i);
     expect(c.sql).not.toMatch(/RETURNING id/i);
+  });
+
+  test('clamps lastReadMessageId to the conversation\'s newest message', async () => {
+    mockDb = makeDb({ maxId: 20 });
+    expect((await read({ lastReadMessageId: 999999 })).body).toEqual({ ok: true });
+    expect(sqlCalls(/SELECT MAX\(id\)/)[0].params).toEqual([1]);
+    expect(sqlCalls(/INSERT INTO family_message_reads/)[0].params).toEqual([3, 1, 20]);
+  });
+
+  test('empty conversation -> ok without writing a read marker', async () => {
+    mockDb = makeDb({ maxId: null });
+    expect((await read({ lastReadMessageId: 5 })).body).toEqual({ ok: true });
+    expect(sqlCalls(/INSERT INTO family_message_reads/)).toHaveLength(0);
   });
 
   test('invalid lastReadMessageId -> 400', async () => {

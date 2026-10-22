@@ -7,6 +7,7 @@ struct MainTabView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @State private var selectedTab = MainTabView.initialTab
     @ObservedObject private var messagesStore = MessagesStore.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     /// DEBUG builds honor a `-initialTab <index>` launch argument (scripted simulator
     /// walkthroughs); Release always starts on the first tab.
@@ -95,6 +96,13 @@ struct MainTabView: View {
             }
         }
         .task(id: authManager.currentUser?.id) { await refreshMessages() }
+        // Messages may have arrived while backgrounded or while the socket was down.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await refreshMessages() } }
+        }
+        .onReceive(LiveNotificationsManager.shared.$authenticatedAt.compactMap { $0 }) { _ in
+            Task { await refreshMessages() }
+        }
     }
 
     /// Patients and family only: caregivers/organizations are never conversation participants.

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest';
 import { invokeRoute } from './helpers/invokeRoute.js';
 import { fakeDb } from './helpers/fakeDb.js';
 
@@ -18,6 +18,13 @@ vi.mock('../src/database/db.js', () => ({
 import patientNotes from '../src/routes/patientNotes.js';
 import meals from '../src/routes/meals.js';
 import careNotes from '../src/routes/careNotes.js';
+
+// Fixture dates are 2026-10-19; pin the server clock so the localDate range guard accepts them.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-19T12:00:00Z'));
+});
+afterAll(() => vi.useRealTimers());
 
 const patientUser = { id: 7, role: 'patient' };
 const caregiver = { id: 2, role: 'caregiver' };
@@ -237,5 +244,29 @@ describe('care notes GET access', () => {
     mockDb = fakeDb([[/FROM family_patient_links/, { get: () => undefined }]]);
     expect((await call(careNotes, 'get', '/:patientId', {}, family, { patientId: '1' })).status).toBe(403);
     expect((await call(careNotes, 'get', '/:patientId', {}, family, { patientId: 'abc' })).status).toBe(400);
+  });
+});
+
+describe('localDate range on calendar writes', () => {
+  // Clock pinned to 2026-10-19T12:00Z above.
+  const cases = [['2026-10-19', true], ['2026-10-18', true], ['2026-10-20', true], ['2026-10-17', false], ['2026-10-21', false]];
+  test('patient notes, meals and care notes accept +/-1 day and reject +/-2', async () => {
+    for (const [d, ok] of cases) {
+      mockDb = makeDb();
+      const rs = [
+        await call(patientNotes, 'post', '/', { patientId: 1, content: 'x', localDate: d }, patientUser),
+        await call(meals, 'post', '/', { patientId: 1, mealType: 'lunch', description: 'x', localDate: d }, patientUser),
+        await call(careNotes, 'post', '/', { patientId: 1, content: 'x', localDate: d }, caregiver),
+      ];
+      for (const r of rs) {
+        if (ok) expect(r.status, d).toBe(201);
+        else expect(r, d).toEqual({ status: 400, body: { error: 'localDate out of range' } });
+      }
+      if (!ok) expect(writes(/INSERT/)).toHaveLength(0);
+    }
+  });
+  test('care notes still allow an absent localDate', async () => {
+    mockDb = makeDb();
+    expect((await call(careNotes, 'post', '/', { patientId: 1, content: 'x' }, caregiver)).status).toBe(201);
   });
 });

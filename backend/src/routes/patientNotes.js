@@ -3,7 +3,7 @@ import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
 import {
-  isPosInt, parseId, validDate, textError, roleGuard, guardPatient, loadOwned,
+  isPosInt, parseId, localDateError, textError, roleGuard, guardPatient, loadOwned,
 } from '../services/entryGuards.js';
 
 const router = express.Router();
@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
     const db = getDb();
     let err = roleGuard(req.user, ['patient'], 'Only patients can write patient notes');
     if (!err && !isPosInt(patientId)) err = { status: 400, error: 'patientId must be a positive integer' };
-    if (!err && !validDate(localDate)) err = { status: 400, error: 'localDate must be YYYY-MM-DD' };
+    if (!err) err = localDateError(localDate);
     if (!err) {
       const t = textError(content, 'content');
       if (t) err = { status: 400, error: t };

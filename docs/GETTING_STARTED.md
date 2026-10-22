@@ -128,18 +128,12 @@ Use the medication bottle scanner in AddMedicationView to photograph a prescript
 **API Endpoints:**
 - `POST /api/ai/parse-medication` — Extract medication details from label text; returns name, dosage, frequency, instructions, rxcui, and canonicalName (RxNorm validation happens internally)
 
-### Pill Photo Verification
+### Pill Check & Dose Logging
 
-Caregivers can verify medications by photographing pills. The app uses on-device Vision OCR to detect imprints and matches them against a bundled pill index. Results show:
-- **Green (Match)** — Imprint matches the expected medication
-- **Orange (Mismatch)** — Imprint doesn't match; retake option available
-- **Retry (Unrecognized)** — Imprint not in index; retry capture
-
-**iOS Entry Point:** `PillVerificationView` in the medication management flow
-
-**API Endpoint:**
-- `POST /api/verification/verify/:medicationId` — Log verification events (match/mismatch) to verification_logs table
+Caregivers log doses with a photo pill check or manually; the backend dose rules (count, form, strength, daily maximum by drug) decide pass/fail, and only passing checks record doses.
+- `POST /api/pill-checks` — on-device detections (label, confidence, imprint) for a photo check; boxes are stripped and the photo is never uploaded or stored.
+- `POST /api/dose-logs/manual` — a manually entered dose (medication + pill count), checked by the same rules.
 
 ### Privacy & HIPAA Compliance
 
-Pill images never leave the device. Only imprint text (extracted on-device via VisionKit OCR) is sent to the server for verification logging. Image data remains local.
+Pill images never leave the device. Only detection labels, confidences and imprint text are sent to the server for dose checks. Image data remains local.
