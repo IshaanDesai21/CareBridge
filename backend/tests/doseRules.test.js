@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import {
   evaluatePillCheck, evaluateManualDose, resolvableFailureIds, normalizeStrength,
-  drugClassFor, CORRECTION_WINDOW_MS, CONFIDENCE_THRESHOLD, TARGET_CLASSES, CLASS_FORM,
+  drugClassFor, drugKeyFor, duplicateMedicationProblem, CORRECTION_WINDOW_MS, CONFIDENCE_THRESHOLD, TARGET_CLASSES, CLASS_FORM,
 } from '../src/services/doseRules.js';
 
 const L = { id: 1, name: 'Lisinopril', strength: '10 mg', form: 'tablet', pills_per_dose_min: 1, pills_per_dose_max: 1, doses_per_day: 1 };
@@ -297,5 +297,30 @@ describe('fail-closed regressions', () => {
     r = run({ catalog: cat2, medications: [{ ...L, strength: null }, B], detections: [det('lisinopril', 0.9, 'q1')] });
     expect(r.status).toBe('pass');
     expect(r.doses[0].strengthVerified).toBe(false);
+  });
+});
+
+describe('drugKeyFor', () => {
+  test('target class wins regardless of strength/case/extra words', () => {
+    expect(drugKeyFor('Lisinopril')).toBe('lisinopril');
+    expect(drugKeyFor('LISINOPRIL 20 mg tablet')).toBe('lisinopril');
+    expect(drugKeyFor('Benzonatate 100mg capsules')).toBe('benzonatate');
+  });
+  test('other names: lowercase, collapse whitespace, strip strength/dose text', () => {
+    expect(drugKeyFor('Metformin 500 mg')).toBe('metformin');
+    expect(drugKeyFor('  metformin   1000mg ')).toBe('metformin');
+    expect(drugKeyFor('Vitamin  D3 1000 IU')).toBe('vitamin d');
+    expect(drugKeyFor('Fish Oil')).toBe('fish oil');
+    expect(drugKeyFor('Aspirin - 81 mg')).toBe('aspirin');
+  });
+  test('degenerate input', () => {
+    expect(drugKeyFor('500 mg')).toBe('500 mg');
+    expect(drugKeyFor(null)).toBe(null);
+  });
+  test('duplicateMedicationProblem copies the engine message with a title-cased label', () => {
+    expect(duplicateMedicationProblem('vitamin d')).toEqual({
+      code: 'duplicate_medication', label: 'Vitamin D',
+      message: 'Vitamin D is listed more than once. Remove the old entry before checking.',
+    });
   });
 });

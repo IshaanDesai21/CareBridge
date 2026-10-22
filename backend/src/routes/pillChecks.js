@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
     const medications = await db.prepare(
       'SELECT * FROM medications WHERE patient_id = ? AND is_active = 1',
     ).all(patientId);
-    const totals = await todayTotals(db, patientId, localDate);
+    const totals = await todayTotals(db, patientId, localDate, medications);
     const evaluation = evaluatePillCheck({ detections, medications, todayTotals: totals, catalog });
     const check = await persistEvaluation(db, {
       patientId, user: req.user, source: 'photo', evaluation,

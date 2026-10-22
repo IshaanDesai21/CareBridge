@@ -25,12 +25,15 @@ const med = {
 };
 const lisin = [{ label: 'lisinopril', confidence: 0.9, imprint: 'X', box: [1, 2, 3, 4] }];
 
-function makeDb({ meds = [med], failures = [], totals = [], patient = { id: 1 } } = {}) {
+function makeDb({ meds = [med], failures = [], doseRows = [], patient = { id: 1 } } = {}) {
   return fakeDb([
+    [/FROM dose_logs d JOIN medications m/, { all: () => doseRows }],
     [/SELECT organization_id FROM users/, { get: () => ({ organization_id: null }) }],
     [/SELECT id FROM patients WHERE id = \?/, { get: () => patient }],
-    [/FROM medications/, { all: () => meds, get: (id) => meds.find((m) => m.id === id && m.is_active === 1) }],
-    [/SUM\(pill_count\)/, { all: () => totals }],
+    [/FROM medications/, {
+      all: () => meds.filter((m) => m.is_active === 1),
+      get: (id) => meds.find((m) => m.id === id && m.is_active === 1),
+    }],
     [/FROM pill_checks/, { all: (_pid, src) => failures.filter((f) => !f.source || f.source === src) }],
     [/INSERT INTO pill_checks/, { run: () => ({ lastInsertRowid: 55 }) }],
     [/INSERT INTO dose_logs/, { run: () => ({ lastInsertRowid: 1 }) }],
@@ -227,5 +230,66 @@ describe('fix round 1', () => {
     }
     const good = await post({ patientId: 1, localDate: okDate, detections: [{ label: 'a', imprint: null, confidence: 0.5 }] });
     expect(good.status).toBe(201);
+  });
+});
+
+describe('daily maximum by drug across medication rows', () => {
+  const okDate = '2026-10-19';
+  // Refill: old row (now inactive) already has 2 pills logged today; new active row allows 1 x 2/day = 2.
+  const oldRow = { ...med, id: 9, name: 'Lisinopril 10 mg', is_active: 0 };
+  const newRow = { ...med, id: 10, pills_per_dose_min: 1, pills_per_dose_max: 1, doses_per_day: 2 };
+  const doseRows = [{ name: 'Lisinopril 10 mg', pill_count: 1 }, { name: 'Lisinopril 10 mg', pill_count: 1 }];
+
+  test('totals query joins medications and is not grouped by medication_id', async () => {
+    mockDb = makeDb({ meds: [oldRow, newRow], doseRows });
+    await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: okDate });
+    const q = callsMatching(mockDb, /FROM dose_logs/)[0];
+    expect(q.sql).not.toMatch(/GROUP BY medication_id/);
+    expect(q.params).toEqual([1, okDate]);
+  });
+
+  test('manual: refill row inherits the old row\'s pills -> over_daily_max', async () => {
+    mockDb = makeDb({ meds: [oldRow, newRow], doseRows });
+    const r = await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: okDate });
+    expect(r.body.check.status).toBe('fail');
+    expect(r.body.check.problems.map((p) => p.code)).toEqual(['over_daily_max']);
+    expect(callsMatching(mockDb, /INSERT INTO dose_logs/)).toHaveLength(0);
+  });
+
+  test('photo: refill row inherits the old row\'s pills -> over_daily_max', async () => {
+    mockDb = makeDb({ meds: [oldRow, newRow], doseRows });
+    const r = await post({ patientId: 1, localDate: okDate, detections: lisin });
+    expect(r.body.check.status).toBe('fail');
+    expect(r.body.check.problems.map((p) => p.code)).toEqual(['over_daily_max']);
+  });
+
+  test('photo: pills logged under a differently-named row of the same drug count', async () => {
+    mockDb = makeDb({ meds: [newRow], doseRows: [{ name: 'LISINOPRIL tabs', pill_count: 2 }] });
+    const r = await post({ patientId: 1, localDate: okDate, detections: lisin });
+    expect(r.body.check.problems.map((p) => p.code)).toEqual(['over_daily_max']);
+    mockDb = makeDb({ meds: [newRow], doseRows: [{ name: 'Atorvastatin', pill_count: 2 }] });
+    expect((await post({ patientId: 1, localDate: okDate, detections: lisin })).body.check.status).toBe('pass');
+  });
+
+  test('manual: two active rows for the same drug -> duplicate_medication fail check', async () => {
+    const dup = { ...med, id: 11, name: 'lisinopril 20 mg', strength: '20 mg' };
+    mockDb = makeDb({ meds: [med, dup] });
+    const r = await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: okDate });
+    expect(r.status).toBe(201);
+    expect(r.body.check.status).toBe('fail');
+    expect(r.body.check.problems).toEqual([{
+      code: 'duplicate_medication', label: 'Lisinopril',
+      message: 'Lisinopril is listed more than once. Remove the old entry before checking.',
+    }]);
+    expect(callsMatching(mockDb, /INSERT INTO pill_checks/)[0].params).toEqual(expect.arrayContaining(['manual', 'fail']));
+    expect(callsMatching(mockDb, /INSERT INTO dose_logs/)).toHaveLength(0);
+  });
+
+  test('manual: non-target duplicate by normalized name also fails', async () => {
+    const a = { ...med, id: 10, name: 'Metformin 500 mg' };
+    const b = { ...med, id: 12, name: 'metformin  1000mg' };
+    mockDb = makeDb({ meds: [a, b] });
+    const r = await manual({ patientId: 1, medicationId: 10, pillCount: 1, localDate: okDate });
+    expect(r.body.check.problems[0]).toMatchObject({ code: 'duplicate_medication', label: 'Metformin' });
   });
 });
