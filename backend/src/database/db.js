@@ -353,6 +353,26 @@ async function initializeTables() {
     CREATE INDEX IF NOT EXISTS idx_meals_patient_date ON meals(patient_id, local_date);
   `);
 
+  // Private patient<->family group messaging (never exposed to caregivers/organizations).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS family_messages (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      sender_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS family_message_reads (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      last_read_message_id INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, patient_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_family_messages_patient_id ON family_messages(patient_id, id);
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
