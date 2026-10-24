@@ -5,52 +5,112 @@ import Charts
 
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @State private var selectedTab = MainTabView.initialTab
+    @ObservedObject private var messagesStore = MessagesStore.shared
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// DEBUG builds honor a `-initialTab <index>` launch argument (scripted simulator
+    /// walkthroughs); Release always starts on the first tab.
+    private static var initialTab: Int {
+        #if DEBUG
+        return UserDefaults.standard.integer(forKey: "initialTab")
+        #else
+        return 0
+        #endif
+    }
 
     var body: some View {
         Group {
             switch authManager.currentUser?.role {
             case "caregiver", "organization":
-                TabView {
+                TabView(selection: $selectedTab) {
                     CaregiverView()
                         .environmentObject(authManager)
                         .tabItem { Label("Patients", systemImage: "person.2.fill") }
+                        .tag(0)
                     ScanMedicationView()
                         .tabItem { Label("Scan Med", systemImage: "camera.fill") }
+                        .tag(1)
+                    CalendarPatientPicker { patient in
+                        CalendarView(patientId: patient.id, viewerRole: authManager.currentUser?.role ?? "caregiver")
+                    }
+                    .environmentObject(authManager)
+                    .tabItem { Label("Calendar", systemImage: "calendar") }
+                    .tag(2)
                     ProfileView()
                         .environmentObject(authManager)
                         .tabItem { Label("Profile", systemImage: "person.fill") }
+                        .tag(3)
                 }
                 .tint(Color.cbPrimary)
 
             case "family":
-                TabView {
+                TabView(selection: $selectedTab) {
                     FamilyPortalView()
                         .environmentObject(authManager)
                         .tabItem { Label("Overview", systemImage: "heart.text.square.fill") }
+                        .tag(0)
+                    CalendarPatientPicker { patient in
+                        CalendarView(patientId: patient.id, viewerRole: "family")
+                    }
+                    .environmentObject(authManager)
+                    .tabItem { Label("Calendar", systemImage: "calendar") }
+                    .tag(1)
+                    MessagesView(role: "family")
+                        .environmentObject(authManager)
+                        .tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right.fill") }
+                        .badge(messagesStore.totalUnread)
+                        .tag(2)
                     ProfileView()
                         .environmentObject(authManager)
                         .tabItem { Label("Profile", systemImage: "person.fill") }
+                        .tag(3)
                 }
                 .tint(Color.cbPrimary)
 
             default: // patient
-                TabView {
+                TabView(selection: $selectedTab) {
                     HomeView()
                         .environmentObject(authManager)
                         .tabItem { Label("Home", systemImage: "house.fill") }
-                    WellnessView()
+                        .tag(0)
+                    PatientCalendarTab()
                         .environmentObject(authManager)
-                        .tabItem { Label("Wellness", systemImage: "heart.fill") }
+                        .tabItem { Label("Calendar", systemImage: "calendar") }
+                        .tag(1)
                     MedicationsView()
                         .environmentObject(authManager)
                         .tabItem { Label("Medications", systemImage: "pill.fill") }
+                        .tag(2)
+                    MessagesView(role: "patient")
+                        .environmentObject(authManager)
+                        .tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right.fill") }
+                        .badge(messagesStore.totalUnread)
+                        .tag(3)
                     ProfileView()
                         .environmentObject(authManager)
                         .tabItem { Label("Profile", systemImage: "person.fill") }
+                        .tag(4)
                 }
                 .tint(Color.cbPrimary)
             }
         }
+        .task(id: authManager.currentUser?.id) { await refreshMessages() }
+        // Messages may have arrived while backgrounded or while the socket was down.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await refreshMessages() } }
+        }
+        .onReceive(LiveNotificationsManager.shared.$authenticatedAt.compactMap { $0 }) { _ in
+            Task { await refreshMessages() }
+        }
+    }
+
+    /// Patients and family only: caregivers/organizations are never conversation participants.
+    private func refreshMessages() async {
+        guard let user = authManager.currentUser, ["patient", "family"].contains(user.role),
+              let token = authManager.token else { return }
+        messagesStore.setCurrentUser(user.id)
+        await messagesStore.refreshUnread(token: token)
     }
 }
 

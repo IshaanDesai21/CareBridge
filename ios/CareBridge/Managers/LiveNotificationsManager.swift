@@ -12,6 +12,9 @@ final class LiveNotificationsManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
     /// Bumped whenever a live notification arrives, so views can refresh their list.
     @Published private(set) var lastReceivedAt: Date?
+    /// Bumped on every successful socket auth (first connect and each reconnect), so views can
+    /// re-fetch state that may have changed while the socket was down.
+    @Published private(set) var authenticatedAt: Date?
 
     private var task: URLSessionWebSocketTask?
     private var session: URLSession?
@@ -116,12 +119,22 @@ final class LiveNotificationsManager: NSObject, ObservableObject {
         switch type {
         case "auth_ok":
             isConnected = true
+            authenticatedAt = Date()
         case "notification":
             lastReceivedAt = Date()
             if let notif = json["notification"] as? [String: Any],
                let title = notif["title"] as? String,
                let body = notif["body"] as? String {
                 NotificationsManager.shared.postLocal(title: title, body: body)
+            }
+        case "family_message":
+            // In-app only (badge + conversation); deliberately no local system notification.
+            // handle(_:) already runs on the main actor (see listen()).
+            if let payload = json["message"],
+               JSONSerialization.isValidJSONObject(payload),
+               let messageData = try? JSONSerialization.data(withJSONObject: payload),
+               let familyMessage = try? JSONDecoder().decode(FamilyMessage.self, from: messageData) {
+                MessagesStore.shared.receive(familyMessage)
             }
         default:
             break

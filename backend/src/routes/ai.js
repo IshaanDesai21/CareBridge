@@ -2,6 +2,7 @@ import express from 'express';
 import { getDb } from '../database/db.js';
 import { authenticateToken } from '../utils/auth.js';
 import logger from '../utils/logger.js';
+import { getMedicationInfo } from '../services/rxnorm.js';
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -270,7 +271,11 @@ router.post('/parse-medication', async (req, res) => {
 
     const fallbackParse = () => {
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      return { name: lines[0] || null, dosage: null, frequency: null, instructions: null, confidence: 'low' };
+      return {
+        name: lines[0] || null, dosage: null, frequency: null, instructions: null,
+        form: null, pillsPerDoseMin: null, pillsPerDoseMax: null, dosesPerDay: null, asNeeded: false,
+        confidence: 'low'
+      };
     };
 
     if (!NVIDIA_KEY) {
@@ -280,12 +285,17 @@ router.post('/parse-medication', async (req, res) => {
     const systemPrompt = `You are a pharmacy label parser. You are given raw, possibly noisy OCR text lifted from a
 prescription medication bottle or box label. Extract structured fields. Respond with ONLY a single JSON object,
 no markdown fences, no commentary, matching exactly this shape:
-{"name": string|null, "dosage": string|null, "frequency": string|null, "instructions": string|null, "isMedication": boolean}
+{"name": string|null, "dosage": string|null, "frequency": string|null, "form": "tablet"|"capsule"|null, "pillsPerDoseMin": integer|null, "pillsPerDoseMax": integer|null, "dosesPerDay": integer|null, "asNeeded": boolean, "instructions": string|null, "isMedication": boolean}
 
 Rules:
 - "name": the drug name, capitalized normally (e.g. "Lisinopril"). Strip dosage/manufacturer noise.
 - "dosage": strength like "10mg" or "500 mg". Null if not present.
 - "frequency": how often it's taken, in plain English (e.g. "Once daily", "Twice a day with food"). Null if not present.
+- "form": "tablet" or "capsule" if stated, else null.
+- "pillsPerDoseMin"/"pillsPerDoseMax": pills per dose. "Take 2 capsules by mouth 3 times daily" -> form "capsule", pillsPerDoseMin 2, pillsPerDoseMax 2, dosesPerDay 3. "Take 1 to 2 tablets every 12 hours" -> min 1, max 2, dosesPerDay 2.
+- "dosesPerDay": "once daily" -> 1; "twice daily"/"every 12 hours" -> 2; "three times daily"/"every 8 hours" -> 3; "four times daily"/"every 6 hours" -> 4.
+- "asNeeded": "as needed"/"PRN" -> true, otherwise false.
+- Use null when not stated; never guess.
 - "instructions": any other directions on the label (e.g. "Take with food", "Do not drink alcohol"). Null if none.
 - "isMedication": false if this text clearly isn't a medication label (e.g. random object, no drug name found).
 - Never invent information that isn't implied by the text.`;
@@ -304,16 +314,24 @@ Rules:
     }
 
     if (!parsed.isMedication || !parsed.name) {
-      return res.json({ medication: { name: null, dosage: null, frequency: null, instructions: null, confidence: 'none' } });
+      return res.json({ medication: { name: null, dosage: null, frequency: null, instructions: null, form: null, pillsPerDoseMin: null, pillsPerDoseMax: null, dosesPerDay: null, asNeeded: false, confidence: 'none' } });
     }
 
+    const validated = await getMedicationInfo(parsed.name);
     res.json({
       medication: {
         name: parsed.name,
         dosage: parsed.dosage ?? null,
         frequency: parsed.frequency ?? null,
         instructions: parsed.instructions ?? null,
-        confidence: 'high'
+        form: parsed.form === 'tablet' || parsed.form === 'capsule' ? parsed.form : null,
+        pillsPerDoseMin: Number.isInteger(parsed.pillsPerDoseMin) ? parsed.pillsPerDoseMin : null,
+        pillsPerDoseMax: Number.isInteger(parsed.pillsPerDoseMax) ? parsed.pillsPerDoseMax : null,
+        dosesPerDay: Number.isInteger(parsed.dosesPerDay) ? parsed.dosesPerDay : null,
+        asNeeded: parsed.asNeeded === true,
+        confidence: 'high',
+        rxcui: validated ? validated.rxcui : null,
+        canonicalName: validated ? validated.name : null
       }
     });
   } catch (error) {

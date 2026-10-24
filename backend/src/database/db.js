@@ -155,6 +155,16 @@ async function initializeTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS verification_logs (
+      id SERIAL PRIMARY KEY,
+      medication_id INTEGER REFERENCES medications(id) ON DELETE CASCADE,
+      status TEXT CHECK (status IN ('match', 'mismatch')),
+      expected_name TEXT NOT NULL,
+      detected_pills TEXT NOT NULL,
+      verified_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS appointments (
       id SERIAL PRIMARY KEY,
       patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
@@ -262,6 +272,12 @@ async function initializeTables() {
     ALTER TABLE patients ADD COLUMN IF NOT EXISTS ai_companion_gender TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id INTEGER;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_id TEXT UNIQUE;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS form TEXT;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS strength TEXT;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS pills_per_dose_min INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS pills_per_dose_max INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS doses_per_day INTEGER;
+    ALTER TABLE medications ADD COLUMN IF NOT EXISTS as_needed INTEGER DEFAULT 0;
   `);
 
   // Organizations: an owner creates + names an org and gets a single join code.
@@ -274,6 +290,87 @@ async function initializeTables() {
       owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // Pill checks (photo/manual verification attempts) and the dose logs they produce.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pill_checks (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      performed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      source TEXT CHECK (source IN ('photo', 'manual')),
+      status TEXT CHECK (status IN ('pass', 'fail')),
+      problems TEXT NOT NULL DEFAULT '[]',
+      detections TEXT NOT NULL DEFAULT '[]',
+      local_date TEXT NOT NULL,
+      resolved_by_check_id INTEGER REFERENCES pill_checks(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dose_logs (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      medication_id INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
+      pill_check_id INTEGER REFERENCES pill_checks(id) ON DELETE SET NULL,
+      source TEXT CHECK (source IN ('photo', 'manual')),
+      pill_count INTEGER NOT NULL,
+      strength_verified INTEGER DEFAULT 0,
+      logged_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      local_date TEXT NOT NULL,
+      given_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_dose_logs_patient_date ON dose_logs(patient_id, local_date);
+    CREATE INDEX IF NOT EXISTS idx_pill_checks_patient_status ON pill_checks(patient_id, status, created_at);
+  `);
+
+  // Calendar: patient/family notes and meals, keyed by the patient's local date.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS patient_notes (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      content TEXT NOT NULL,
+      local_date TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS meals (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      meal_type TEXT CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
+      description TEXT NOT NULL,
+      local_date TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    ALTER TABLE care_notes ADD COLUMN IF NOT EXISTS local_date TEXT;
+
+    CREATE INDEX IF NOT EXISTS idx_patient_notes_patient_date ON patient_notes(patient_id, local_date);
+    CREATE INDEX IF NOT EXISTS idx_meals_patient_date ON meals(patient_id, local_date);
+  `);
+
+  // Private patient<->family group messaging (never exposed to caregivers/organizations).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS family_messages (
+      id SERIAL PRIMARY KEY,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      sender_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS family_message_reads (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      last_read_message_id INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, patient_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_family_messages_patient_id ON family_messages(patient_id, id);
   `);
 
   await pool.query(`

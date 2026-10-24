@@ -4,7 +4,8 @@ struct MedicationsView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @State private var medications: [Medication] = []
     @State private var isLoading = true
-    
+    @State private var patientId: Int? = nil
+
     var body: some View {
         NavigationStack {
             Group {
@@ -28,12 +29,13 @@ struct MedicationsView: View {
             }
         }
     }
-    
+
     private func loadMedications() async {
         guard let token = authManager.token else { return }
         isLoading = true
         do {
             let pid = try await APIService.shared.getMyPatient(token: token)
+            patientId = pid
             medications = try await APIService.shared.getMedications(patientId: pid, token: token)
         } catch {
             print("Failed to load medications: \(error)")

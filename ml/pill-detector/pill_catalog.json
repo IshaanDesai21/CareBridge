@@ -1,0 +1,1064 @@
+[
+  {
+    "imprint": "PD15510",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015523"
+  },
+  {
+    "imprint": "155",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015523"
+  },
+  {
+    "imprint": "PD15620",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015623"
+  },
+  {
+    "imprint": "156",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015623"
+  },
+  {
+    "imprint": "PD15740",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015723"
+  },
+  {
+    "imprint": "157",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015723"
+  },
+  {
+    "imprint": "PD15880",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015823"
+  },
+  {
+    "imprint": "158",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00071015823"
+  },
+  {
+    "imprint": "TV5056",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505698"
+  },
+  {
+    "imprint": "5056",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505698"
+  },
+  {
+    "imprint": "TV5057",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505798"
+  },
+  {
+    "imprint": "5057",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505798"
+  },
+  {
+    "imprint": "TV5058",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505898"
+  },
+  {
+    "imprint": "5058",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505898"
+  },
+  {
+    "imprint": "TV5059",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505998"
+  },
+  {
+    "imprint": "5059",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00093505998"
+  },
+  {
+    "imprint": "WW268",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "00143126801"
+  },
+  {
+    "imprint": "268",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "00143126801"
+  },
+  {
+    "imprint": "3757",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00172375760"
+  },
+  {
+    "imprint": "3758",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "SQUARE",
+    "ndc11": "00172375860"
+  },
+  {
+    "imprint": "I3759",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "TRIANGLE",
+    "ndc11": "00172375960"
+  },
+  {
+    "imprint": "3759",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "TRIANGLE",
+    "ndc11": "00172375960"
+  },
+  {
+    "imprint": "3760",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "PENTAGON (5 SIDED)",
+    "ndc11": "00172376060"
+  },
+  {
+    "imprint": "3761",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00172376160"
+  },
+  {
+    "imprint": "3762",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00172376260"
+  },
+  {
+    "imprint": "E102",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "ORANGE",
+    "shape": "OVAL",
+    "ndc11": "00185010201"
+  },
+  {
+    "imprint": "102",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "ORANGE",
+    "shape": "OVAL",
+    "ndc11": "00185010201"
+  },
+  {
+    "imprint": "E104",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "00185010401"
+  },
+  {
+    "imprint": "E103",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "00185063001"
+  },
+  {
+    "imprint": "103",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "00185063001"
+  },
+  {
+    "imprint": "E54",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "OVAL",
+    "ndc11": "00185540001"
+  },
+  {
+    "imprint": "ZESTRIL10131",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "ROUND",
+    "ndc11": "00310013111"
+  },
+  {
+    "imprint": "ZESTRIL",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "ROUND",
+    "ndc11": "00310013111"
+  },
+  {
+    "imprint": "131",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "ROUND",
+    "ndc11": "00310013111"
+  },
+  {
+    "imprint": "ZESTRIL40134",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00310013411"
+  },
+  {
+    "imprint": "ZESTRIL40",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00310013411"
+  },
+  {
+    "imprint": "134",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00310013411"
+  },
+  {
+    "imprint": "L22M",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "BLUE",
+    "shape": "ROUND",
+    "ndc11": "00378207201"
+  },
+  {
+    "imprint": "ML23",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "ORANGE",
+    "shape": "ROUND",
+    "ndc11": "00378207301"
+  },
+  {
+    "imprint": "L23",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "ORANGE",
+    "shape": "ROUND",
+    "ndc11": "00378207301"
+  },
+  {
+    "imprint": "L24M",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00378207401"
+  },
+  {
+    "imprint": "L25M",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00378207501"
+  },
+  {
+    "imprint": "L26M",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "GREEN",
+    "shape": "ROUND",
+    "ndc11": "00378207601"
+  },
+  {
+    "imprint": "L27M",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "BLUE",
+    "shape": "ROUND",
+    "ndc11": "00378207701"
+  },
+  {
+    "imprint": "PA83",
+    "drug": "benzonatate",
+    "strength": "200 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "00555188302"
+  },
+  {
+    "imprint": "WATSON405",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00591040501"
+  },
+  {
+    "imprint": "405",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00591040501"
+  },
+  {
+    "imprint": "WATSON406",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00591040601"
+  },
+  {
+    "imprint": "WAT",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00591040601"
+  },
+  {
+    "imprint": "SON",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00591040601"
+  },
+  {
+    "imprint": "406",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00591040601"
+  },
+  {
+    "imprint": "WATSON407",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "BLUE",
+    "shape": "ROUND",
+    "ndc11": "00591040710"
+  },
+  {
+    "imprint": "407",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "BLUE",
+    "shape": "ROUND",
+    "ndc11": "00591040710"
+  },
+  {
+    "imprint": "WATSON408",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591040810"
+  },
+  {
+    "imprint": "408",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591040810"
+  },
+  {
+    "imprint": "WATSON409",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591040901"
+  },
+  {
+    "imprint": "409",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591040901"
+  },
+  {
+    "imprint": "WATSON885",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591088501"
+  },
+  {
+    "imprint": "885",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "00591088501"
+  },
+  {
+    "imprint": "4209V",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00603420921"
+  },
+  {
+    "imprint": "4209",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00603420921"
+  },
+  {
+    "imprint": "4210V",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "00603421032"
+  },
+  {
+    "imprint": "3972V",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421132"
+  },
+  {
+    "imprint": "3972",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421132"
+  },
+  {
+    "imprint": "3973V",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421221"
+  },
+  {
+    "imprint": "3973",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421221"
+  },
+  {
+    "imprint": "3974V",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421321"
+  },
+  {
+    "imprint": "3974",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421321"
+  },
+  {
+    "imprint": "4214V",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421428"
+  },
+  {
+    "imprint": "4214",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "00603421428"
+  },
+  {
+    "imprint": "ASC105",
+    "drug": "benzonatate",
+    "strength": "100 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "00904590460"
+  },
+  {
+    "imprint": "ASC",
+    "drug": "benzonatate",
+    "strength": "100 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "00904590460"
+  },
+  {
+    "imprint": "105",
+    "drug": "benzonatate",
+    "strength": "100 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "00904590460"
+  },
+  {
+    "imprint": "802",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "42192080201"
+  },
+  {
+    "imprint": "701",
+    "drug": "phenazopyridine",
+    "strength": "100 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "42937070110"
+  },
+  {
+    "imprint": "702",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "42937070210"
+  },
+  {
+    "imprint": "H144",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "43547035110"
+  },
+  {
+    "imprint": "H146",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "OVAL",
+    "ndc11": "43547035311"
+  },
+  {
+    "imprint": "PA46",
+    "drug": "benzonatate",
+    "strength": "100 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "50111085101"
+  },
+  {
+    "imprint": "ML25",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "51079098320"
+  },
+  {
+    "imprint": "611",
+    "drug": "phenazopyridine",
+    "strength": "100 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "51293061101"
+  },
+  {
+    "imprint": "612",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "51293061201"
+  },
+  {
+    "imprint": "AN1",
+    "drug": "phenazopyridine",
+    "strength": "100 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "51293080101"
+  },
+  {
+    "imprint": "PY2",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "51293080201"
+  },
+  {
+    "imprint": "RDY121",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012105"
+  },
+  {
+    "imprint": "121",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012105"
+  },
+  {
+    "imprint": "RDY122",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012205"
+  },
+  {
+    "imprint": "122",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012205"
+  },
+  {
+    "imprint": "RDY123",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012305"
+  },
+  {
+    "imprint": "123",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012305"
+  },
+  {
+    "imprint": "RDY124",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012405"
+  },
+  {
+    "imprint": "124",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "55111012405"
+  },
+  {
+    "imprint": "A21",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "57237005399"
+  },
+  {
+    "imprint": "133",
+    "drug": "benzonatate",
+    "strength": "100 mg",
+    "form": "capsule",
+    "color": "YELLOW",
+    "shape": "OVAL",
+    "ndc11": "57664013388"
+  },
+  {
+    "imprint": "APOL5",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "OVAL",
+    "ndc11": "60505018500"
+  },
+  {
+    "imprint": "APOA10",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "60505257809"
+  },
+  {
+    "imprint": "APOATV20",
+    "drug": "atorvastatin",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "60505257909"
+  },
+  {
+    "imprint": "APOATV40",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "60505258009"
+  },
+  {
+    "imprint": "APOATV80",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "60505267109"
+  },
+  {
+    "imprint": "RX12",
+    "drug": "atorvastatin",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "63304082790"
+  },
+  {
+    "imprint": "RX829",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "63304082990"
+  },
+  {
+    "imprint": "829",
+    "drug": "atorvastatin",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "63304082990"
+  },
+  {
+    "imprint": "RX830",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "63304083090"
+  },
+  {
+    "imprint": "830",
+    "drug": "atorvastatin",
+    "strength": "80 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "OVAL",
+    "ndc11": "63304083090"
+  },
+  {
+    "imprint": "W928",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "64679092801"
+  },
+  {
+    "imprint": "928",
+    "drug": "lisinopril",
+    "strength": "5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "64679092801"
+  },
+  {
+    "imprint": "W929",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "64679092901"
+  },
+  {
+    "imprint": "929",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "64679092901"
+  },
+  {
+    "imprint": "W953",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "64679095301"
+  },
+  {
+    "imprint": "953",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "64679095301"
+  },
+  {
+    "imprint": "AN2",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "65162052010"
+  },
+  {
+    "imprint": "LUPIN25",
+    "drug": "lisinopril",
+    "strength": "2.5 mg",
+    "form": "tablet",
+    "color": "WHITE",
+    "shape": "ROUND",
+    "ndc11": "68180051202"
+  },
+  {
+    "imprint": "LUPIN10",
+    "drug": "lisinopril",
+    "strength": "10 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "ROUND",
+    "ndc11": "68180051403"
+  },
+  {
+    "imprint": "LUPIN20",
+    "drug": "lisinopril",
+    "strength": "20 mg",
+    "form": "tablet",
+    "color": "PINK",
+    "shape": "ROUND",
+    "ndc11": "68180051501"
+  },
+  {
+    "imprint": "LUPIN30",
+    "drug": "lisinopril",
+    "strength": "30 mg",
+    "form": "tablet",
+    "color": "RED",
+    "shape": "ROUND",
+    "ndc11": "68180051602"
+  },
+  {
+    "imprint": "LUPIN40",
+    "drug": "lisinopril",
+    "strength": "40 mg",
+    "form": "tablet",
+    "color": "YELLOW",
+    "shape": "ROUND",
+    "ndc11": "68180051703"
+  },
+  {
+    "imprint": "114",
+    "drug": "phenazopyridine",
+    "strength": "100 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "75826011410"
+  },
+  {
+    "imprint": "115",
+    "drug": "phenazopyridine",
+    "strength": "200 mg",
+    "form": "tablet",
+    "color": "BROWN",
+    "shape": "ROUND",
+    "ndc11": "75826011510"
+  }
+]

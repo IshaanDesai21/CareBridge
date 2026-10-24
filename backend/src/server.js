@@ -23,6 +23,12 @@ import aiRoutes from './routes/ai.js';
 import familyRoutes from './routes/family.js';
 import alertRoutes from './routes/alerts.js';
 import organizationRoutes from './routes/organizations.js';
+import pillCheckRoutes from './routes/pillChecks.js';
+import doseLogRoutes from './routes/doseLogs.js';
+import calendarRoutes from './routes/calendar.js';
+import patientNotesRoutes from './routes/patientNotes.js';
+import mealsRoutes from './routes/meals.js';
+import messageRoutes from './routes/messages.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -139,6 +145,12 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/family', familyRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/organizations', organizationRoutes);
+app.use('/api/pill-checks', pillCheckRoutes);
+app.use('/api/dose-logs', doseLogRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/patient-notes', patientNotesRoutes);
+app.use('/api/meals', mealsRoutes);
+app.use('/api/messages', messageRoutes);
 
 // WebSocket
 wss.on('error', (error) => {

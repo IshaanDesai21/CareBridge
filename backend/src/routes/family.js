@@ -26,6 +26,26 @@ router.get('/patient', async (req, res) => {
   }
 });
 
+// Get every patient linked to the current family user
+router.get('/patients', async (req, res) => {
+  try {
+    const db = getDb();
+    const patients = await db.prepare(`
+      SELECT p.*, u.email, u.first_name, u.last_name
+      FROM family_patient_links fpl
+      JOIN patients p ON fpl.patient_id = p.id
+      JOIN users u ON p.user_id = u.id
+      WHERE fpl.family_user_id = ?
+      ORDER BY p.id
+    `).all(req.user.id);
+
+    res.json({ patients });
+  } catch (error) {
+    logger.error('Get family patients error:', error);
+    res.status(500).json({ error: 'Failed to get linked patients' });
+  }
+});
+
 // Link family user to patient via join code
 router.post('/link', async (req, res) => {
   try {

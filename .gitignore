@@ -46,3 +46,6 @@ logs/
 
 # Uploads
 uploads/
+
+# Brainstorming mockups (superpowers visual companion)
+.superpowers/

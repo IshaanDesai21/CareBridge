@@ -295,4 +295,60 @@ struct ScannedMedication: Codable {
     let frequency: String?
     let instructions: String?
     let confidence: String
+    let rxcui: Int?
+    let canonicalName: String?
+
+    var isValid: Bool { (rxcui ?? 0) > 0 }
+}
+
+// MARK: - Family messages
+
+/// One message in a patient's private patient↔family conversation (/api/messages).
+/// The backend sends `senderUserId`/`senderRole` as null once the sender's account is
+/// gone, so those decode leniently instead of failing the whole page.
+struct FamilyMessage: Codable, Identifiable, Hashable {
+    let id: Int
+    let patientId: Int
+    let senderUserId: Int?
+    let senderName: String
+    let senderRole: String
+    let content: String
+    let createdAt: String
+
+    init(id: Int, patientId: Int, senderUserId: Int?, senderName: String,
+         senderRole: String, content: String, createdAt: String) {
+        self.id = id
+        self.patientId = patientId
+        self.senderUserId = senderUserId
+        self.senderName = senderName
+        self.senderRole = senderRole
+        self.content = content
+        self.createdAt = createdAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        patientId = try c.decode(Int.self, forKey: .patientId)
+        senderUserId = try c.decodeIfPresent(Int.self, forKey: .senderUserId)
+        senderName = try c.decodeIfPresent(String.self, forKey: .senderName) ?? ""
+        senderRole = try c.decodeIfPresent(String.self, forKey: .senderRole) ?? ""
+        content = try c.decode(String.self, forKey: .content)
+        createdAt = try c.decode(String.self, forKey: .createdAt)
+    }
+
+    /// `createdAt` as a Date; accepts ISO-8601 (with or without fractional seconds)
+    /// and SQLite's "yyyy-MM-dd HH:mm:ss" (UTC).
+    var createdDate: Date? {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: createdAt) { return d }
+        iso.formatOptions = [.withInternetDateTime]
+        if let d = iso.date(from: createdAt) { return d }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return f.date(from: createdAt)
+    }
 }
