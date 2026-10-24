@@ -21,7 +21,12 @@ function stripThinkTags(text) {
   return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 }
 
-async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MODEL) {
+// How long to wait on the AI provider before giving up and using the fallback
+// path. Must stay well under the iOS app's 60s request timeout, otherwise a slow
+// upstream turns into a "trouble connecting" error instead of a fallback reply.
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 30000;
+
+async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MODEL, timeoutMs = AI_TIMEOUT_MS) {
   const body = {
     model,
     messages: [
@@ -38,7 +43,8 @@ async function callAI(systemPrompt, messages, maxTokens = 1024, model = CHAT_MOD
   const res = await fetch(`${NVIDIA_URL}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${NVIDIA_KEY}` },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs)
   });
   if (!res.ok) {
     const err = await res.text();
@@ -302,7 +308,15 @@ Rules:
 
     // gpt-oss-20b reasons before answering and can burn the whole token budget on
     // reasoning alone for a JSON-extraction task like this — give it enough headroom.
-    const raw = await callAI(systemPrompt, `OCR text:\n${text}`, 900, SUMMARY_MODEL);
+    let raw;
+    try {
+      raw = await callAI(systemPrompt, `OCR text:\n${text}`, 900, SUMMARY_MODEL);
+    } catch (err) {
+      // Upstream AI failure or timeout — degrade to the plain-text parse rather
+      // than failing the scan outright.
+      logger.error('parse-medication upstream error:', err.message);
+      return res.json({ medication: fallbackParse() });
+    }
 
     let parsed;
     try {
