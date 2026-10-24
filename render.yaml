@@ -13,6 +13,10 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      # Encrypts health data at rest. Never change or delete it once set:
+      # data encrypted with the old value can't be read back without it.
+      - key: DATA_ENCRYPTION_KEY
+        generateValue: true
       - key: DATABASE_URL
         sync: false # paste your Neon Postgres connection string here
       - key: CORS_ORIGIN

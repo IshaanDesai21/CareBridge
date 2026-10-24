@@ -52,8 +52,11 @@ router.get('/:patientId', async (req, res) => {
     const db = getDb();
     if (!(await canAccessPatient(db, req.user, patientId))) return res.status(403).json({ error: 'Access denied' });
     const medications = await db.prepare(`
-      SELECT * FROM medications WHERE patient_id = ? AND is_active = 1 ORDER BY name ASC
+      SELECT * FROM medications WHERE patient_id = ? AND is_active = 1
     `).all(patientId);
+    // Sorted here rather than in SQL: names are encrypted at rest, so the
+    // database can't order them meaningfully.
+    medications.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? ''), undefined, { sensitivity: 'base' }));
     res.json({ medications });
   } catch (error) {
     logger.error('Get medications error:', error);

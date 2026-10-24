@@ -43,6 +43,11 @@ function validateEnv() {
 
   if (weakJwt) problems.push('JWT_SECRET is missing or weak (need a long random value, 32+ chars).');
   if (!process.env.DATABASE_URL) problems.push('DATABASE_URL is not set (Postgres connection string).');
+  // Health data is encrypted at rest with this key (see utils/fieldCrypto.js).
+  // Losing or changing it makes already-encrypted data unreadable — keep a backup.
+  if (!process.env.DATA_ENCRYPTION_KEY || process.env.DATA_ENCRYPTION_KEY.length < 32) {
+    problems.push('DATA_ENCRYPTION_KEY is missing or too short (need a long random value, 32+ chars).');
+  }
   if (/user:password@host\/dbname/.test(process.env.DATABASE_URL || '')) {
     problems.push('DATABASE_URL is still the placeholder value.');
   }

@@ -3,6 +3,10 @@
 // against that shape only needed `async`/`await` added, not rewritten.
 import pg from 'pg';
 import logger from '../utils/logger.js';
+import {
+  ENCRYPTED_COLUMNS, initFieldCrypto, isEncryptionEnabled, encryptValue,
+  decryptRow, encryptedParamIndexes
+} from '../utils/fieldCrypto.js';
 
 const { Pool } = pg;
 
@@ -17,20 +21,31 @@ function toPgSql(sql) {
   return convertPlaceholders(sql);
 }
 
+// Sensitive columns are encrypted on the way in and decrypted on the way out
+// (see utils/fieldCrypto.js), so callers always see plaintext while Postgres
+// only ever stores ciphertext for those columns.
 class Statement {
   constructor(rawSql) {
     this.rawSql = rawSql;
     this.sql = toPgSql(rawSql);
+    this.encryptedParams = encryptedParamIndexes(rawSql);
+  }
+
+  encryptParams(params) {
+    if (!this.encryptedParams.length || !isEncryptionEnabled()) return params;
+    const out = [...params];
+    for (const i of this.encryptedParams) out[i] = encryptValue(out[i]);
+    return out;
   }
 
   async all(...params) {
-    const { rows } = await pool.query(this.sql, params);
-    return rows;
+    const { rows } = await pool.query(this.sql, this.encryptParams(params));
+    return rows.map(decryptRow);
   }
 
   async get(...params) {
-    const { rows } = await pool.query(this.sql, params);
-    return rows[0];
+    const { rows } = await pool.query(this.sql, this.encryptParams(params));
+    return decryptRow(rows[0]);
   }
 
   async run(...params) {
@@ -44,7 +59,7 @@ class Statement {
       if (isInsertOrIgnore) sql += ' ON CONFLICT DO NOTHING';
       if (!/returning/i.test(sql)) sql += ' RETURNING id';
     }
-    const result = await pool.query(sql, params);
+    const result = await pool.query(sql, this.encryptParams(params));
     return {
       lastInsertRowid: result.rows[0]?.id,
       changes: result.rowCount
@@ -73,8 +88,36 @@ export async function connectDatabase() {
   });
 
   await initializeTables();
+
+  if (initFieldCrypto()) {
+    await encryptExistingRows();
+    logger.info('🔒 Field-level encryption enabled (AES-256-GCM)');
+  } else {
+    logger.warn('⚠️  DATA_ENCRYPTION_KEY is not set — health data will be stored unencrypted.');
+  }
+
   logger.info('✅ Postgres database ready');
   return pool;
+}
+
+// Encrypts any sensitive values still stored as plaintext — rows written before
+// encryption was turned on. Idempotent: already-encrypted values are skipped, so
+// this is cheap on every boot after the first.
+async function encryptExistingRows() {
+  let total = 0;
+  for (const [table, columns] of Object.entries(ENCRYPTED_COLUMNS)) {
+    for (const column of columns) {
+      const { rows } = await pool.query(
+        `SELECT id, ${column} AS value FROM ${table}
+         WHERE ${column} IS NOT NULL AND ${column}::text NOT LIKE 'enc:v1:%'`
+      );
+      for (const row of rows) {
+        await pool.query(`UPDATE ${table} SET ${column} = $1 WHERE id = $2`, [encryptValue(row.value), row.id]);
+      }
+      total += rows.length;
+    }
+  }
+  if (total) logger.info(`🔒 Encrypted ${total} existing value(s) that were stored as plaintext`);
 }
 
 async function initializeTables() {

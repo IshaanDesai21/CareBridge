@@ -40,6 +40,11 @@ automatically on startup (see `backend/src/database/db.js`).
    - `carebridge-api`:
      - `DATABASE_URL` → the Neon connection string from step 1
      - `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID` → from step 3 below
+     - `DATA_ENCRYPTION_KEY` → created automatically by `render.yaml`
+       (`generateValue`). If the service predates it, add it yourself with a
+       long random value (`openssl rand -base64 48`). It encrypts health data
+       in the database — **save a copy somewhere safe and never change it**, or
+       encrypted data becomes unreadable. The API refuses to start without it.
      - `NVIDIA_API_KEY` → your existing key from `backend/.env` (don't reuse
        the dev key in a public repo — copy it directly into Render's env var
        UI, never commit it)

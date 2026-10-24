@@ -55,7 +55,7 @@ struct HIPAAConsentView: View {
                         hipaaSection(
                             icon: "lock.fill",
                             title: "Data Security",
-                            text: "Your information is transmitted over encrypted connections. Access is controlled by authenticated logins and role-based permissions in compliance with HIPAA Security Rule requirements."
+                            text: "Your health information is encrypted with AES-256 when stored and travels only over encrypted connections. Your sign-in is kept in the iPhone's secure Keychain. Access is controlled by authenticated logins and role-based permissions in compliance with HIPAA Security Rule requirements."
                         )
                         hipaaSection(
                             icon: "hand.raised.fill",
